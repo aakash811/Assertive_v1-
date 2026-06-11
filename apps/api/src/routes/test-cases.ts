@@ -1,0 +1,74 @@
+import { Hono } from "hono";
+
+import type { HonoVariables } from "../types/hono";
+
+import { testCaseService } from "../services/test-case.service";
+
+import {
+  createTestCaseSchema,
+  updateTestCaseSchema,
+} from "../validators/test-case.validator";
+
+export const testCaseRoutes = new Hono<{
+  Variables: HonoVariables;
+}>();
+
+testCaseRoutes.post("/", async (c) => {
+  const body = createTestCaseSchema.parse(await c.req.json());
+
+  const projectId = c.get("projectId");
+
+  const testCase = await testCaseService.create(projectId, body);
+
+  return c.json(testCase, 201);
+});
+
+testCaseRoutes.get("/", async (c) => {
+  const projectId = c.get("projectId");
+
+  const testCases = await testCaseService.list(projectId);
+
+  return c.json(testCases);
+});
+
+testCaseRoutes.get("/:id", async (c) => {
+  const id = c.req.param("id");
+  const projectId = c.get("projectId");
+
+  const testCase = await testCaseService.get(id, projectId);
+
+  if (!testCase) {
+    return c.json(
+      {
+        error: "Test case not found",
+      },
+      404,
+    );
+  }
+
+  return c.json(testCase);
+});
+
+testCaseRoutes.patch("/:id", async (c) => {
+  const id = c.req.param("id");
+
+  const body = updateTestCaseSchema.parse(await c.req.json());
+
+  const projectId = c.get("projectId");
+
+  const updated = await testCaseService.update(id, body, projectId);
+
+  return c.json(updated);
+});
+
+testCaseRoutes.delete("/:id", async (c) => {
+  const id = c.req.param("id");
+
+  const projectId = c.get("projectId");
+
+  await testCaseService.delete(id, projectId);
+
+  return c.json({
+    success: true,
+  });
+});

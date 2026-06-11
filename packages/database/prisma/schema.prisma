@@ -1,14 +1,22 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum TestStatus {
+  PASSED
+  FAILED
+  SKIPPED
+  UNKNOWN
+}
+
+enum SyncState {
+  SYNCED
+  STALE
 }
 
 model User {
@@ -19,12 +27,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organizations OrganizationMember[]
+  memberships OrganizationMember[]
 }
 
 model Organization {
-  id String @id @default(uuid())
-
+  id   String @id @default(uuid())
   name String
   slug String @unique
 
@@ -50,14 +57,239 @@ model OrganizationMember {
 }
 
 model Project {
-  id String @id @default(uuid())
-
+  id   String @id @default(uuid())
   name String
+  slug String @unique
 
   organizationId String
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
+  apiKeys    ApiKey[]
+  testCases  TestCase[]
+  tags       Tag[]
+  suites     TestSuite[]
+  runBatches RunBatch[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id String @id @default(uuid())
+
+  name String
+
+  hashedKey String @unique
+
+  isActive Boolean @default(true)
+
+  expiresAt DateTime?
+
+  projectId String
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model TestSuite {
+  id String @id @default(uuid())
+
+  name String
+
+  projectId String
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  parentId String?
+
+  parent TestSuite? @relation("SuiteHierarchy", fields: [parentId], references: [id])
+
+  children TestSuite[] @relation("SuiteHierarchy")
+
+  testCases TestCase[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TestCase {
+  id String @id @default(uuid())
+
+  uniqueId String @unique
+
+  title String
+
+  description String?
+
+  filePath String?
+
+  owner String?
+
+  priority String?
+
+  testType String?
+
+  customFields Json?
+
+  lastStatus TestStatus @default(UNKNOWN)
+
+  isFlaky Boolean @default(false)
+
+  flakyScore Float @default(0)
+
+  syncState SyncState @default(SYNCED)
+
+  isManualOverride Boolean @default(false)
+
+  projectId String
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  suiteId String?
+
+  suite TestSuite? @relation(fields: [suiteId], references: [id])
+
+  tags TestCaseTag[]
+
+  runs TestRun[]
+
+  history TestCaseHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([lastStatus])
+  @@index([syncState])
+  @@index([isFlaky])
+  @@index([projectId, uniqueId])
+}
+
+model Tag {
+  id String @id @default(uuid())
+
+  name String
+
+  color String?
+
+  projectId String
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  testCases TestCaseTag[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, name])
+}
+
+model TestCaseTag {
+  testCaseId String
+  tagId      String
+
+  testCase TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([testCaseId, tagId])
+}
+
+model RunBatch {
+  id String @id @default(uuid())
+
+  branch String?
+
+  commitSha String?
+
+  environment String?
+
+  triggeredBy String?
+
+  ciBuildId String?
+
+  ciBuildUrl String?
+
+  totalCount Int @default(0)
+
+  passedCount Int @default(0)
+
+  failedCount Int @default(0)
+
+  skippedCount Int @default(0)
+
+  projectId String
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  runs TestRun[]
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model TestRun {
+  id String @id @default(uuid())
+
+  status TestStatus
+
+  durationMs Int?
+
+  traceUrl String?
+
+  errorMessage String?
+
+  errorStack String?
+
+  browser String?
+
+  os String?
+
+  attemptNumber Int @default(1)
+
+  isManualOverride Boolean @default(false)
+
+  retryOfId String?
+
+  retryOf TestRun? @relation("RetryChain", fields: [retryOfId], references: [id])
+
+  retries TestRun[] @relation("RetryChain")
+
+  testCaseId String
+
+  testCase TestCase @relation(fields: [testCaseId], references: [id])
+
+  runBatchId String
+
+  runBatch RunBatch @relation(fields: [runBatchId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([testCaseId])
+  @@index([runBatchId])
+}
+
+model TestCaseHistory {
+  id String @id @default(uuid())
+
+  action String
+
+  changes Json?
+
+  comment String?
+
+  changedBy String?
+
+  testCaseId String
+
+  testCase TestCase @relation(fields: [testCaseId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([testCaseId])
 }
