@@ -6,6 +6,7 @@ import { testCaseService } from "../services/test-case.service";
 
 import {
   createTestCaseSchema,
+  discoverTestCasesSchema,
   updateTestCaseSchema,
 } from "../validators/test-case.validator";
 
@@ -29,6 +30,48 @@ testCaseRoutes.get("/", async (c) => {
   const testCases = await testCaseService.list(projectId);
 
   return c.json(testCases);
+});
+
+testCaseRoutes.get("/by-unique-id/:uniqueId", async (c) => {
+  const projectId = c.get("projectId");
+
+  const testCase = await testCaseService.findByUniqueId(
+    c.req.param("uniqueId"),
+    projectId,
+  );
+
+  if (!testCase) {
+    return c.json(
+      {
+        error: "Test case not found",
+      },
+      404,
+    );
+  }
+
+  return c.json(testCase);
+});
+
+testCaseRoutes.post("/discover", async (c) => {
+  const body = discoverTestCasesSchema.parse(await c.req.json());
+
+  const projectId = c.get("projectId");
+
+  const existing = await testCaseService.findByUniqueId(
+    body.uniqueId,
+    projectId,
+  );
+
+  if (existing) {
+    return c.json(existing);
+  }
+
+  const testCase = await testCaseService.create(projectId, {
+    uniqueId: body.uniqueId,
+    title: body.title,
+  });
+
+  return c.json(testCase, 201);
 });
 
 testCaseRoutes.get("/:id", async (c) => {

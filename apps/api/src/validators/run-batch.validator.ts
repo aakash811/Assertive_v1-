@@ -7,4 +7,17 @@ export const createRunBatchSchema = z.object({
   triggeredBy: z.string().optional(),
   ciBuildId: z.string().optional(),
   ciBuildUrl: z.string().optional(),
+  traceUrl: z.string().optional(),
+});
+
+export const uploadResultsSchema = z.object({
+  results: z.array(
+    z.object({
+      uniqueId: z.string(),
+      status: z.enum(["PASSED", "FAILED", "SKIPPED"]),
+      durationMs: z.number().optional(),
+      errorMessage: z.string().optional(),
+      traceUrl: z.string().optional(),
+    }),
+  ),
 });

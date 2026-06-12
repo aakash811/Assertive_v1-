@@ -37,4 +37,8 @@ export const testCaseService = {
   delete(id: string, projectId: string) {
     return testCaseRepository.delete(id, projectId);
   },
+
+  findByUniqueId(uniqueId: string, projectId: string) {
+    return testCaseRepository.findByUniqueId(uniqueId, projectId);
+  },
 };

@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import type { HonoVariables } from "../types/hono";
-import { createRunBatchSchema } from "../validators/run-batch.validator";
+import {
+  createRunBatchSchema,
+  uploadResultsSchema,
+} from "../validators/run-batch.validator";
 import { runBatchService } from "../services/run-batch.service";
 
 export const runBatchRoutes = new Hono<{
@@ -13,6 +16,17 @@ runBatchRoutes.post("/", async (c) => {
   const batch = await runBatchService.create(projectId, body);
 
   return c.json(batch, 201);
+});
+
+runBatchRoutes.post("/:id/upload", async (c) => {
+  const projectId = c.get("projectId");
+  const batchId = c.req.param("id");
+
+  const body = uploadResultsSchema.parse(await c.req.json());
+
+  const result = await runBatchService.upload(batchId, projectId, body.results);
+
+  return c.json(result);
 });
 
 runBatchRoutes.get("/", async (c) => {

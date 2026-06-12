@@ -57,4 +57,13 @@ export const testCaseRepository = {
       },
     });
   },
+
+  findByUniqueId(uniqueId: string, projectId: string) {
+    return prisma.testCase.findFirst({
+      where: {
+        uniqueId,
+        projectId,
+      },
+    });
+  },
 };
