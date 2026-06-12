@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { runBatchRepository } from "../repositories/run-batch.repository";
+import { testRunService } from "./test-run.service";
 
 export const runBatchService = {
   create(projectId: string, data: any) {
@@ -30,15 +31,13 @@ export const runBatchService = {
         continue;
       }
 
-      await prisma.testRun.create({
-        data: {
-          testCaseId: testCase.id,
-          runBatchId: batchId,
-          status: result.status,
-          durationMs: result.durationMs,
-          errorMessage: result.errorMessage,
-          traceUrl: result.traceUrl,
-        },
+      await testRunService.create({
+        testCaseId: testCase.id,
+        runBatchId: batchId,
+        status: result.status,
+        durationMs: result.durationMs,
+        errorMessage: result.errorMessage,
+        traceUrl: result.traceUrl,
       });
     }
 

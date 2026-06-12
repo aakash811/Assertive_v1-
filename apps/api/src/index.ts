@@ -1,9 +1,15 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+import type { HonoVariables } from "./types/hono";
 import { protectedRoutes } from "./routes/protected";
 import { testRoutes } from "./routes/test";
 import { apiKeyRoutes } from "./routes/api-keys";
-import type { HonoVariables } from "./types/hono";
+import { historyRoutes } from "./routes/history";
+import { metricsRoutes } from "./routes/metrics";
+import { tagRoutes } from "./routes/tags";
+import { testSuiteRoutes } from "./routes/test-suite";
+import { manualOverrideRoutes } from "./routes/manual-override";
+import { syncRoutes } from "./routes/sync";
 
 const app = new Hono<{ Variables: HonoVariables }>();
 
@@ -16,6 +22,18 @@ app.get("/health", (c) => {
 app.route("/test", testRoutes);
 
 app.route("/api/api-keys", apiKeyRoutes);
+
+app.route("/api", historyRoutes);
+
+app.route("/api", metricsRoutes);
+
+app.route("/api/tags", tagRoutes);
+
+app.route("/api/test-suites", testSuiteRoutes);
+
+app.route("/api/manual-overrides", manualOverrideRoutes);
+
+app.route("/api/sync", syncRoutes);
 
 app.route("/api", protectedRoutes);
 

@@ -1,5 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { testRunRepository } from "../repositories/test-run.repository";
+import { flakinessService } from "./flakiness.service";
+import { historyService } from "./history.service";
 
 export const testRunService = {
   async create(data: any) {
@@ -47,7 +49,18 @@ export const testRunService = {
       },
     });
 
+    await historyService.create({
+      testCaseId: run.testCaseId,
+
+      action: "STATUS_CHANGED",
+      changes: {
+        status: run.status,
+      },
+    });
+
     return run;
+
+    await flakinessService.recalculate(run.testCaseId);
   },
 
   list(projectId: string) {
