@@ -1,6 +1,7 @@
 import { AssertiveClient } from "./client";
 import { resolveConfig, type ReporterConfig } from "./config";
 import { enqueue, loadQueue, saveQueue } from "./offline-queue";
+import { getCIContext } from "./context";
 
 import {
   Reporter,
@@ -55,10 +56,13 @@ export class AssertiveReporter implements Reporter {
     }
 
     try {
+      const ciContext = getCIContext();
       const batch = await this.client.createRunBatch({
-        branch: process.env.GITHUB_REF_NAME ?? "local",
-
-        environment: process.env.NODE_ENV ?? "development",
+        branch: ciContext.branch,
+        commitSha: ciContext.commitSha,
+        ciBuildId: ciContext.ciBuildId,
+        ciBuildUrl: ciContext.ciBuildUrl,
+        environment: ciContext.environment,
       });
 
       this.runBatchId = batch.id;

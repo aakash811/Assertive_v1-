@@ -14,14 +14,29 @@ export const historyRepository = {
     });
   },
 
-  list(testCaseId: string) {
-    return prisma.testCaseHistory.findMany({
-      where: {
-        testCaseId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  async list(testCaseId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      prisma.testCaseHistory.findMany({
+        where: {
+          testCaseId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.testCaseHistory.count({
+        where: {
+          testCaseId,
+        },
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+    };
   },
 };

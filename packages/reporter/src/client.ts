@@ -1,4 +1,9 @@
-import type { RunBatchPayload, TestRunPayload } from "./types";
+import type {
+  BatchResult,
+  RunBatchPayload,
+  TestMetadata,
+  TestRunPayload,
+} from "./types";
 import { ReporterConfig } from "./config";
 
 export class AssertiveClient {
@@ -44,7 +49,11 @@ export class AssertiveClient {
     return response.json();
   }
 
-  async discoverTestCase(uniqueId: string, title: string, metadata?: any) {
+  async discoverTestCase(
+    uniqueId: string,
+    title: string,
+    metadata?: TestMetadata,
+  ) {
     const response = await fetch(
       `${this.config.apiUrl}/api/test-cases/discover`,
       {
@@ -61,7 +70,7 @@ export class AssertiveClient {
     return response.json();
   }
 
-  async uploadBatch(runBatchId: string, results: any[]) {
+  async uploadBatch(runBatchId: string, results: BatchResult[]) {
     const response = await fetch(
       `${this.config.apiUrl}/api/run-batches/${runBatchId}/upload`,
       {

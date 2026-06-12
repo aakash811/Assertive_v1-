@@ -3,13 +3,20 @@ import path from "node:path";
 
 const QUEUE_FILE = path.join(process.cwd(), ".assertive-queue.json");
 
+export interface BatchResult {
+  uniqueId: string;
+  status: string;
+  durationMs: number;
+  errorMessage?: string;
+  traceUrl?: string | null;
+}
 export interface QueueItem {
   batch: {
     branch: string;
     environment: string;
   };
 
-  results: unknown[];
+  results: BatchResult[];
 }
 
 export function loadQueue(): QueueItem[] {

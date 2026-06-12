@@ -1,0 +1,6 @@
+{
+  "apiUrl": "http://localhost:4321",
+  "apiKey": "API-KEY",
+  "framework": "playwright",
+  "projectId": "b9236281-7975-471b-b4ae-2e1f73716fae"
+}

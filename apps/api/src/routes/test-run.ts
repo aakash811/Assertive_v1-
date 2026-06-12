@@ -16,8 +16,21 @@ testRunRoutes.post("/", async (c) => {
 
 testRunRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
+  const page = Number(c.req.query("page")) || 1;
+  const limit = Number(c.req.query("limit")) || 20;
 
-  return c.json(await testRunService.list(projectId));
+  const result = await testRunService.list(projectId, page, limit);
+
+  return c.json({
+    items: result.items,
+
+    pagination: {
+      page,
+      limit,
+      total: result.total,
+      totalPages: Math.ceil(result.total / limit),
+    },
+  });
 });
 
 testRunRoutes.get("/:id", async (c) => {

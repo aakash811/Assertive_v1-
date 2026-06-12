@@ -1,5 +1,21 @@
 import { z } from "zod";
 
+export type CreateRunBatchDto = {
+  branch?: string;
+  environment?: string;
+  commitSha?: string;
+  ciBuildId?: string;
+  ciBuildUrl?: string;
+};
+
+export type BatchUploadResult = {
+  uniqueId: string;
+  status: string;
+  durationMs?: number;
+  errorMessage?: string;
+  traceUrl?: string;
+};
+
 export const createRunBatchSchema = z.object({
   branch: z.string().optional(),
   commitSha: z.string().optional(),

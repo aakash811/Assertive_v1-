@@ -1,13 +1,14 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { testRunRepository } from "../repositories/test-run.repository";
 import { flakinessService } from "./flakiness.service";
 import { historyService } from "./history.service";
 
 export const testRunService = {
-  async create(data: any) {
+  async create(data: Prisma.TestRunUncheckedCreateInput) {
     const run = await testRunRepository.create(data);
 
-    const updateData: any = {
+    const updateData: Prisma.RunBatchUpdateInput = {
       totalCount: {
         increment: 1,
       },
@@ -58,13 +59,12 @@ export const testRunService = {
       },
     });
 
-    return run;
-
     await flakinessService.recalculate(run.testCaseId);
+    return run;
   },
 
-  list(projectId: string) {
-    return testRunRepository.findMany(projectId);
+  list(projectId: string, page: number, limit: number) {
+    return testRunRepository.findMany(projectId, page, limit);
   },
 
   get(id: string, projectId: string) {

@@ -9,7 +9,17 @@ export const historyRoutes = new Hono<{
 }>();
 
 historyRoutes.get("/test-cases/:id/history", async (c) => {
-  const history = await historyService.list(c.req.param("id"));
+  const page = Number(c.req.query("page")) || 1;
+  const limit = Number(c.req.query("limit")) || 20;
+  const history = await historyService.list(c.req.param("id"), page, limit);
 
-  return c.json(history);
+  return c.json({
+    items: history.items,
+    pagination: {
+      page,
+      limit,
+      total: history.total,
+      totalPages: Math.ceil(history.total / limit),
+    },
+  });
 });

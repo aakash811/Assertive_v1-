@@ -31,8 +31,20 @@ runBatchRoutes.post("/:id/upload", async (c) => {
 
 runBatchRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
+  const page = Number(c.req.query("page")) || 1;
+  const limit = Number(c.req.query("limit")) || 20;
 
-  return c.json(await runBatchService.list(projectId));
+  const result = await runBatchService.list(projectId, page, limit);
+
+  return c.json({
+    items: result.items,
+    pagination: {
+      page,
+      limit,
+      total: result.total,
+      totalPages: Math.ceil(result.total / limit),
+    },
+  });
 });
 
 runBatchRoutes.get("/:id", async (c) => {
