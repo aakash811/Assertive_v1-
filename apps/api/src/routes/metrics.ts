@@ -1,15 +1,11 @@
 import { Hono } from "hono";
-
-import type { HonoVariables } from "../types/hono";
-
 import { metricsService } from "../services/metrics.service";
+import { HonoVariables } from "../types/hono";
 
-export const metricsRoutes = new Hono<{
-  Variables: HonoVariables;
-}>();
+export const metricsRoutes = new Hono<{ Variables: HonoVariables }>();
 
-metricsRoutes.get("/metrics/summary", async (c) => {
-  const projectId = c.get("projectId");
+metricsRoutes.get("/summary", async (c) => {
+  const result = await metricsService.getSummary(c.get("projectId"));
 
-  return c.json(await metricsService.summary(projectId));
+  return c.json(result);
 });

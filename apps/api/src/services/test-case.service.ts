@@ -15,8 +15,8 @@ export const testCaseService = {
     });
   },
 
-  list(projectId: string) {
-    return testCaseRepository.findMany(projectId);
+  list(projectId: string, page: number, limit: number) {
+    return testCaseRepository.findMany(projectId, page, limit);
   },
 
   get(id: string, projectId: string) {

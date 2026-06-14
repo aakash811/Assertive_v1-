@@ -5,13 +5,23 @@ import { protectedRoutes } from "./routes/protected";
 import { testRoutes } from "./routes/test";
 import { apiKeyRoutes } from "./routes/api-keys";
 import { historyRoutes } from "./routes/history";
-import { metricsRoutes } from "./routes/metrics";
 import { tagRoutes } from "./routes/tags";
 import { testSuiteRoutes } from "./routes/test-suite";
 import { manualOverrideRoutes } from "./routes/manual-override";
 import { syncRoutes } from "./routes/sync";
+import { projectRoutes } from "./routes/project";
+import { cors } from "hono/cors";
 
 const app = new Hono<{ Variables: HonoVariables }>();
+
+app.use(
+  "*",
+  cors({
+    origin: "http://localhost:3000",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 app.get("/health", (c) => {
   return c.json({
@@ -23,9 +33,9 @@ app.route("/test", testRoutes);
 
 app.route("/api/api-keys", apiKeyRoutes);
 
-app.route("/api", historyRoutes);
+app.route("/api/project", projectRoutes);
 
-app.route("/api", metricsRoutes);
+app.route("/api", historyRoutes);
 
 app.route("/api/tags", tagRoutes);
 

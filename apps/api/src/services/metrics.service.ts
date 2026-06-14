@@ -1,56 +1,15 @@
-import { prisma } from "../lib/prisma";
+import { metricsRepository } from "../repositories/metrics.repository";
 
 export const metricsService = {
-  async summary(projectId: string) {
-    const [totalTests, passedRuns, failedRuns, flakyTests, runBatches] =
-      await Promise.all([
-        prisma.testCase.count({
-          where: { projectId },
-        }),
-
-        prisma.testRun.count({
-          where: {
-            testCase: {
-              projectId,
-            },
-            status: "PASSED",
-          },
-        }),
-
-        prisma.testRun.count({
-          where: {
-            testCase: {
-              projectId,
-            },
-            status: "FAILED",
-          },
-        }),
-
-        prisma.testCase.count({
-          where: {
-            projectId,
-            isFlaky: true,
-          },
-        }),
-
-        prisma.runBatch.count({
-          where: {
-            projectId,
-          },
-        }),
-      ]);
+  async getSummary(projectId: string) {
+    const summary = await metricsRepository.getSummary(projectId);
 
     return {
-      totalTests,
-      passedRuns,
-      failedRuns,
-      flakyTests,
-      runBatches,
-
+      ...summary,
       passRate:
-        passedRuns + failedRuns === 0
+        summary.totalRuns === 0
           ? 0
-          : Number(((passedRuns / (passedRuns + failedRuns)) * 100).toFixed(2)),
+          : Number(((summary.passedRuns / summary.totalRuns) * 100).toFixed(2)),
     };
   },
 };

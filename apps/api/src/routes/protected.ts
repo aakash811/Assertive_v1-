@@ -4,6 +4,8 @@ import { HonoVariables } from "../types/hono";
 import { testCaseRoutes } from "./test-cases";
 import { testRunRoutes } from "./test-run";
 import { runBatchRoutes } from "./run-batches";
+import { metricsRoutes } from "./metrics";
+import { analyticsRoutes } from "./analytics";
 
 export const protectedRoutes = new Hono<{ Variables: HonoVariables }>();
 
@@ -18,6 +20,10 @@ protectedRoutes.get("/me", async (c) => {
 
 protectedRoutes.route("/test-cases", testCaseRoutes);
 
+protectedRoutes.route("/metrics", metricsRoutes);
+
 protectedRoutes.route("/run-batches", runBatchRoutes);
 
 protectedRoutes.route("/test-runs", testRunRoutes);
+
+protectedRoutes.route("/analytics", analyticsRoutes);

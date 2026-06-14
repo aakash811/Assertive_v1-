@@ -26,10 +26,21 @@ testCaseRoutes.post("/", async (c) => {
 
 testCaseRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
+  const page = Number(c.req.query("page")) || 1;
+  const limit = Number(c.req.query("limit")) || 10;
 
-  const testCases = await testCaseService.list(projectId);
+  const testCases = await testCaseService.list(projectId, page, limit);
 
-  return c.json(testCases);
+  return c.json({
+    items: testCases.items,
+
+    pagination: {
+      page,
+      limit,
+      total: testCases.total,
+      totalPages: Math.ceil(testCases.total / limit),
+    },
+  });
 });
 
 testCaseRoutes.get("/by-unique-id/:uniqueId", async (c) => {

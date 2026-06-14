@@ -12,15 +12,30 @@ export const testCaseRepository = {
     });
   },
 
-  findMany(projectId: string) {
-    return prisma.testCase.findMany({
-      where: {
-        projectId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  async findMany(projectId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      prisma.testCase.findMany({
+        where: {
+          projectId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.testCase.count({
+        where: {
+          projectId,
+        },
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+    };
   },
 
   findById(id: string, projectId: string) {
