@@ -23,6 +23,8 @@ jobs:
 
       - run: pnpm install
 
+      - run: pnpm --filter @assertive/database prisma generate
+
       - run: pnpm typecheck
 
       - run: pnpm lint

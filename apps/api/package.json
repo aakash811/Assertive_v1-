@@ -14,6 +14,7 @@
   "dependencies": {
     "@assertive/database": "workspace:^",
     "@assertive/shared": "workspace:^",
+    "@prisma/client": "6.16.2",
     "@hono/node-server": "^2.0.4",
     "hono": "^4.12.25",
     "zod": "^4.4.3"
