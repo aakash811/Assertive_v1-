@@ -6,10 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@assertive/database": "workspace:^",
     "@tanstack/react-query": "^5.101.0",
     "better-auth": "^1.6.15",
     "next": "16.2.7",

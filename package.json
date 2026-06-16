@@ -5,15 +5,20 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint"
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@vitest/coverage-v8": "^4.1.9",
     "dotenv": "^17.4.2",
     "prisma": "6.16.2",
+    "supertest": "^7.2.2",
     "tsx": "^4.22.4",
     "turbo": "^2.9.17",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "@prisma/client": "6.16.2"

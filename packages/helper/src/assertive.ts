@@ -1,8 +1,8 @@
 import { metadataStore } from "./store";
 import type { Priority, TestType } from "./metadata";
 
-function getOrCreate(key: string) {
-  let metadata = metadataStore.get(key);
+function getOrCreate(testName: string) {
+  let metadata = metadataStore.get(testName);
 
   if (!metadata) {
     metadata = {
@@ -10,7 +10,7 @@ function getOrCreate(key: string) {
       fields: {},
     };
 
-    metadataStore.set(key, metadata);
+    metadataStore.set(testName, metadata);
   }
 
   return metadata;

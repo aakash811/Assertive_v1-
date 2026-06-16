@@ -2,6 +2,13 @@
   "name": "@assertive/database",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "seed": " tsx src/run-seed.ts"
+  },
   "exports": {
     ".": {
       "import": "./src/client.ts",

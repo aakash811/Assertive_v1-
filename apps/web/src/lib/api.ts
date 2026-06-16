@@ -204,6 +204,7 @@ export async function getStatusDistribution() {
 export async function overrideTestCaseStatus(
   id: string,
   status: "PASSED" | "FAILED" | "SKIPPED",
+  comment: string,
 ) {
   const response = await fetch(
     `${API_URL}/manual-overrides/test-cases/${id}/status`,
@@ -213,7 +214,7 @@ export async function overrideTestCaseStatus(
         Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, comment }),
     },
   );
 

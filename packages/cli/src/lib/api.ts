@@ -1,7 +1,21 @@
 import { loadConfig } from "../utils/load-config";
 
-export async function apiPost(path: string, body: unknown) {
+function validateConfig() {
   const config = loadConfig();
+
+  if (!config.apiUrl) {
+    throw new Error("apiUrl is missing");
+  }
+
+  if (!config.apiKey) {
+    throw new Error("apiKey is missing");
+  }
+
+  return config;
+}
+
+export async function apiPost(path: string, body?: unknown) {
+  const config = validateConfig();
 
   const response = await fetch(`${config.apiUrl}${path}`, {
     method: "POST",
@@ -9,7 +23,7 @@ export async function apiPost(path: string, body: unknown) {
       Authorization: `Bearer ${config.apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   if (!response.ok) {
@@ -22,7 +36,7 @@ export async function apiPost(path: string, body: unknown) {
 }
 
 export async function apiGet(path: string) {
-  const config = loadConfig();
+  const config = validateConfig();
 
   const response = await fetch(`${config.apiUrl}${path}`, {
     headers: {

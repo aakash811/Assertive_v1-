@@ -11,7 +11,7 @@ export function OverrideStatusModal({ testCaseId }: Props) {
   const [open, setOpen] = useState(false);
 
   const [status, setStatus] = useState("PASSED");
-
+  const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit() {
@@ -21,6 +21,7 @@ export function OverrideStatusModal({ testCaseId }: Props) {
       await overrideTestCaseStatus(
         testCaseId,
         status as "PASSED" | "FAILED" | "SKIPPED",
+        comment,
       );
 
       alert("Status updated");
@@ -55,16 +56,26 @@ export function OverrideStatusModal({ testCaseId }: Props) {
           className="w-full rounded border p-2"
         >
           <option value="PASSED">Passed</option>
-
           <option value="FAILED">Failed</option>
-
           <option value="SKIPPED">Skipped</option>
         </select>
+
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Reason"
+          className="mt-4 w-full rounded border p-2"
+        />
+
+        <div className="mt-4 text-sm">Current → {status}</div>
+        <div className="mt-4 rounded bg-yellow-50 p-3 text-sm">
+          This override will be cleared on the next automated run.
+        </div>
 
         <div className="mt-6 flex gap-2">
           <button
             onClick={submit}
-            disabled={loading}
+            disabled={loading || !comment.trim()}
             className="rounded bg-green-600 px-4 py-2 text-white"
           >
             Save

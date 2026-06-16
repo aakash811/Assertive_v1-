@@ -4,15 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@assertive/database": "workspace:^",
+    "@assertive/shared": "workspace:^",
     "@hono/node-server": "^2.0.4",
     "hono": "^4.12.25",
     "zod": "^4.4.3"

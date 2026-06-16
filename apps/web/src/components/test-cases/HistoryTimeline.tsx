@@ -20,6 +20,43 @@ function getBadgeClass(action: string) {
   }
 }
 
+function getIcon(action: string) {
+  switch (action) {
+    case "UPDATED":
+      return "✏️";
+
+    case "MANUAL_OVERRIDE":
+      return "⚠️";
+
+    case "STATUS_CHANGED":
+      return "🔄";
+
+    case "STALE":
+      return "📦";
+
+    case "RESTORED":
+      return "♻️";
+
+    default:
+      return "•";
+  }
+}
+
+function getRelativeTime(value: string) {
+  const diff = Date.now() - new Date(value).getTime();
+  const hours = Math.floor(diff / 3600000);
+
+  if (hours < 1) {
+    return "just now";
+  }
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 export function HistoryTimeline({ items }: Props) {
   if (!items.length) {
     return <div className="rounded-lg border p-4">No data available</div>;
@@ -37,7 +74,7 @@ export function HistoryTimeline({ items }: Props) {
                 <span
                   className={`rounded-full px-2 py-1 text-xs font-medium ${getBadgeClass(item.action)}`}
                 >
-                  {item.action}
+                  {getIcon(item.action)} {item.action}
                 </span>
               </div>
 
@@ -62,11 +99,17 @@ export function HistoryTimeline({ items }: Props) {
               )}
 
               {item.changedBy && (
-                <div className="text-xs text-gray-500">By {item.changedBy}</div>
+                <div className="flex items-center gap-2">
+                  <div className=" flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                    👤
+                  </div>
+
+                  <div>{item.changedBy ?? "System"}</div>
+                </div>
               )}
 
               <div className="text-xs text-gray-500">
-                {new Date(item.createdAt).toLocaleString()}
+                {getRelativeTime(item.createdAt)}
               </div>
             </div>
           ))}

@@ -1,28 +1,24 @@
 import { Command } from "commander";
+
 import { apiGet } from "../lib/api";
-import chalk from "chalk";
 
 export const statusCommand = new Command("status")
-  .description("Project Status")
+  .description("Show sync status")
   .action(async () => {
     try {
-      const metrics = await apiGet("/api/metrics/summary");
-      console.log("");
-      console.log("Assertive Status");
-      console.log("================");
+      const result = await apiGet("/api/status");
+
       console.log("");
 
-      console.log(`Total Tests : ${metrics.totalTests}`);
+      console.log("Project Status");
 
-      console.log(`Run Batches : ${metrics.runBatches}`);
+      console.log("==============");
 
-      console.log(chalk.green(`Passed Runs : ${metrics.passedRuns}`));
+      console.log(`Total: ${result.total}`);
 
-      console.log(chalk.red(`Failed Runs : ${metrics.failedRuns}`));
+      console.log(`Synced: ${result.synced}`);
 
-      console.log(chalk.yellow(`Flaky Tests : ${metrics.flakyTests}`));
-
-      console.log(chalk.cyan(`Pass Rate   : ${metrics.passRate}%`));
+      console.log(`Stale: ${result.stale}`);
 
       console.log("");
     } catch (error) {

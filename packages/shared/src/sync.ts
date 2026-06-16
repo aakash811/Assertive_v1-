@@ -1,0 +1,20 @@
+export interface SyncTestCase {
+  uniqueId: string;
+  title: string;
+  filePath: string;
+  owner?: string;
+  priority?: string;
+  testType?: string;
+  suite?: string;
+  tags: string[];
+  customFields: Record<string, string>;
+}
+
+export interface SyncPayload {
+  testCases: SyncTestCase[];
+}
+
+export interface SyncResponse {
+  synced: number;
+  stale: number;
+}

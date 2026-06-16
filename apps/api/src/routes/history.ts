@@ -23,3 +23,27 @@ historyRoutes.get("/test-cases/:id/history", async (c) => {
     },
   });
 });
+
+historyRoutes.get("/history/:uniqueId", async (c) => {
+  const projectId = c.get("projectId");
+  const page = Number(c.req.query("page")) || 1;
+  const limit = Number(c.req.query("limit")) || 20;
+
+  const history = await historyService.listByUniqueId(
+    projectId,
+    c.req.param("uniqueId"),
+    page,
+    limit,
+  );
+
+  return c.json({
+    items: history.items,
+
+    pagination: {
+      page,
+      limit,
+      total: history.total,
+      totalPages: Math.ceil(history.total / limit),
+    },
+  });
+});

@@ -41,21 +41,36 @@ export const testRunService = {
       data: updateData,
     });
 
+    const existing = await prisma.testCase.findUnique({
+      where: {
+        id: run.testCaseId,
+      },
+    });
+
     await prisma.testCase.update({
       where: {
         id: run.testCaseId,
       },
       data: {
         lastStatus: run.status,
+        isManualOverride: false,
+        overrideComment: null,
       },
     });
+
+    if (existing?.isManualOverride) {
+      await historyService.create({
+        testCaseId: run.testCaseId,
+        action: "MANUAL_OVERRIDE_CLEARED",
+      });
+    }
 
     await historyService.create({
       testCaseId: run.testCaseId,
 
       action: "STATUS_CHANGED",
       changes: {
-        status: run.status,
+        status: { to: run.status },
       },
     });
 

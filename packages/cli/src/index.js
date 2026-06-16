@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const commander_1 = require("commander");
+const init_1 = require("./commands/init");
+const sync_1 = require("./commands/sync");
+const status_1 = require("./commands/status");
+const link_1 = require("./commands/link");
+const history_1 = require("./commands/history");
+const cleanup_1 = require("./commands/cleanup");
+const program = new commander_1.Command();
+program.name("assertive").description("Assertive CLI").version("0.1.0");
+program.addCommand(init_1.initCommand);
+program.addCommand(sync_1.syncCommand);
+program.addCommand(status_1.statusCommand);
+program.addCommand(link_1.linkCommand);
+program.addCommand(history_1.historyCommand);
+program.addCommand(cleanup_1.cleanupCommand);
+program.parse();

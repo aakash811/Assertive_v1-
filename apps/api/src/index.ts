@@ -11,6 +11,9 @@ import { manualOverrideRoutes } from "./routes/manual-override";
 import { syncRoutes } from "./routes/sync";
 import { projectRoutes } from "./routes/project";
 import { cors } from "hono/cors";
+import { statusRoutes } from "./routes/status";
+import { cleanupRoutes } from "./routes/cleanup";
+import { prisma } from "./lib/prisma";
 
 const app = new Hono<{ Variables: HonoVariables }>();
 
@@ -23,9 +26,10 @@ app.use(
   }),
 );
 
-app.get("/health", (c) => {
+app.get("/api/health", (c) => {
   return c.json({
     status: "ok",
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -45,11 +49,27 @@ app.route("/api/manual-overrides", manualOverrideRoutes);
 
 app.route("/api/sync", syncRoutes);
 
+app.route("/api/status", statusRoutes);
+
+app.route("/api", cleanupRoutes);
+
 app.route("/api", protectedRoutes);
 
-serve({
+const server = serve({
   fetch: app.fetch,
   port: 4321,
 });
+
+console.log("API running on port 4321");
+
+async function shutdown() {
+  console.log("Shutting down...");
+  await prisma.$disconnect();
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+
+process.on("SIGTERM", shutdown);
 
 console.log("API running on the port 4321");
