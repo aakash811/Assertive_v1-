@@ -7,8 +7,11 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "seed": " tsx src/run-seed.ts",
-    "postinstall": "prisma generate"
+    "seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "studio": "prisma studio"
   },
   "exports": {
     ".": {

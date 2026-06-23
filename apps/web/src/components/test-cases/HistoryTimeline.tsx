@@ -57,6 +57,18 @@ function getRelativeTime(value: string) {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function renderValue(value: unknown) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
 export function HistoryTimeline({ items }: Props) {
   if (!items.length) {
     return <div className="rounded-lg border p-4">No data available</div>;
@@ -80,15 +92,23 @@ export function HistoryTimeline({ items }: Props) {
 
               {item.changes && (
                 <div className="mt-2 text-sm text-gray-600">
-                  {item.changes.from && item.changes.to ? (
-                    <>
-                      {item.changes.from}
-                      {" → "}
-                      {item.changes.to}
-                    </>
-                  ) : item.changes.status ? (
-                    <>Status → {item.changes.status}</>
-                  ) : null}
+                  {item.changes && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      {"from" in item.changes && "to" in item.changes && (
+                        <>
+                          {renderValue(item.changes.from)}
+
+                          {" → "}
+
+                          {renderValue(item.changes.to)}
+                        </>
+                      )}
+
+                      {"status" in item.changes && (
+                        <>Status → {renderValue(item.changes.status)}</>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

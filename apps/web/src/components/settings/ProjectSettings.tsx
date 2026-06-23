@@ -11,11 +11,12 @@ type Props = {
 
 export function ProjectSettings({ project }: Props) {
   const [name, setName] = useState(project.name);
+  const [saved, setSaved] = useState(false);
 
   async function save() {
     await updateProject(name);
-
-    alert("Saved");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   }
 
   return (
@@ -34,6 +35,7 @@ export function ProjectSettings({ project }: Props) {
       >
         Save
       </button>
+      {saved && <div className="mt-2 text-sm text-green-600">Saved</div>}
     </div>
   );
 }

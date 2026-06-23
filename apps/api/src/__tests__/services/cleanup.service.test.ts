@@ -14,7 +14,7 @@ vi.mock("../../lib/prisma", () => ({
 
 import { prisma } from "../../lib/prisma";
 
-import { cleanupService } from "../../services/cleanup.services";
+import { cleanupService } from "../../services/cleanup.service";
 
 describe("cleanupService", () => {
   beforeEach(() => {

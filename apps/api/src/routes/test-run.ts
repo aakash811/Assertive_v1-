@@ -1,7 +1,10 @@
 import { Hono } from "hono";
+import { ok, paginated } from "../lib/api-response";
 import type { HonoVariables } from "../types/hono";
 import { createTestRunSchema } from "../validators/test-run.validators";
 import { testRunService } from "../services/test-run.service";
+import { AppError } from "../lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
 
 export const testRunRoutes = new Hono<{
   Variables: HonoVariables;
@@ -11,7 +14,7 @@ testRunRoutes.post("/", async (c) => {
   const body = createTestRunSchema.parse(await c.req.json());
   const testRun = await testRunService.create(body);
 
-  return c.json(testRun, 201);
+  return c.json(ok(testRun), 201);
 });
 
 testRunRoutes.get("/", async (c) => {
@@ -21,16 +24,13 @@ testRunRoutes.get("/", async (c) => {
 
   const result = await testRunService.list(projectId, page, limit);
 
-  return c.json({
-    items: result.items,
-
-    pagination: {
+  return c.json(
+    paginated(result.items, {
       page,
       limit,
       total: result.total,
-      totalPages: Math.ceil(result.total / limit),
-    },
-  });
+    }),
+  );
 });
 
 testRunRoutes.get("/:id", async (c) => {
@@ -38,8 +38,12 @@ testRunRoutes.get("/:id", async (c) => {
   const testRun = await testRunService.get(c.req.param("id"), projectId);
 
   if (!testRun) {
-    return c.json({ error: "Not Found" }, 404);
+    throw new AppError(
+      ERROR_CODES.TEST_RUN_NOT_FOUND,
+      "Test run not found",
+      404,
+    );
   }
 
-  return c.json(testRun);
+  return c.json(ok(testRun));
 });

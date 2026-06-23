@@ -1,4 +1,5 @@
 import { prisma } from "@assertive/database";
+import type { Prisma, TestStatus } from "@prisma/client";
 
 export const testCaseRepository = {
   create(data: {
@@ -12,23 +13,95 @@ export const testCaseRepository = {
     });
   },
 
-  async findMany(projectId: string, page: number, limit: number) {
+  async findMany(
+    projectId: string,
+    filters: {
+      page: number;
+      limit: number;
+      q?: string;
+      status?: TestStatus;
+      owner?: string;
+      tag?: string;
+      flaky?: boolean;
+    },
+  ) {
+    const { page, limit, q, status, owner, tag, flaky } = filters;
+
     const skip = (page - 1) * limit;
+
+    const where: Prisma.TestCaseWhereInput = {
+      projectId,
+    };
+
+    if (q) {
+      where.OR = [
+        {
+          title: {
+            contains: q,
+            mode: "insensitive",
+          },
+        },
+
+        {
+          uniqueId: {
+            contains: q,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
+
+    if (status) {
+      where.lastStatus = status;
+    }
+
+    if (owner) {
+      where.owner = {
+        contains: owner,
+        mode: "insensitive",
+      };
+    }
+
+    if (tag) {
+      where.tags = {
+        some: {
+          tag: {
+            name: {
+              equals: tag,
+              mode: "insensitive",
+            },
+          },
+        },
+      };
+    }
+
+    if (flaky !== undefined) {
+      where.isFlaky = flaky;
+    }
+
     const [items, total] = await Promise.all([
       prisma.testCase.findMany({
-        where: {
-          projectId,
+        where,
+
+        include: {
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
         },
+
         orderBy: {
-          createdAt: "desc",
+          updatedAt: "desc",
         },
+
         skip,
+
         take: limit,
       }),
+
       prisma.testCase.count({
-        where: {
-          projectId,
-        },
+        where,
       }),
     ]);
 
@@ -44,10 +117,40 @@ export const testCaseRepository = {
         id,
         projectId,
       },
+
+      include: {
+        suite: true,
+
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+
+        runs: {
+          orderBy: {
+            createdAt: "desc",
+          },
+
+          include: {
+            runBatch: true,
+          },
+
+          take: 10,
+        },
+
+        history: {
+          orderBy: {
+            createdAt: "desc",
+          },
+
+          take: 20,
+        },
+      },
     });
   },
 
-  update(
+  async update(
     id: string,
     data: {
       title?: string;
@@ -55,20 +158,41 @@ export const testCaseRepository = {
     },
     projectId: string,
   ) {
-    return prisma.testCase.update({
+    const existing = await prisma.testCase.findFirst({
       where: {
         id,
         projectId,
       },
+    });
+
+    if (!existing) {
+      throw new Error("Test case not found");
+    }
+
+    return prisma.testCase.update({
+      where: {
+        id,
+      },
+
       data,
     });
   },
 
-  delete(id: string, projectId: string) {
-    return prisma.testCase.delete({
+  async delete(id: string, projectId: string) {
+    const existing = await prisma.testCase.findFirst({
       where: {
         id,
         projectId,
+      },
+    });
+
+    if (!existing) {
+      throw new Error("Test case not found");
+    }
+
+    return prisma.testCase.delete({
+      where: {
+        id,
       },
     });
   },

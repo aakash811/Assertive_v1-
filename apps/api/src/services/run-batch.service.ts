@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { runBatchRepository } from "../repositories/run-batch.repository";
 import {
@@ -15,8 +16,17 @@ export const runBatchService = {
     });
   },
 
-  list(projectId: string, page: number, limit: number) {
-    return runBatchRepository.findMany(projectId, page, limit);
+  list(
+    projectId: string,
+    filters: {
+      page: number;
+      limit: number;
+      q?: string;
+      environment?: string;
+      triggeredBy?: string;
+    },
+  ) {
+    return runBatchRepository.findMany(projectId, filters);
   },
 
   get(id: string, projectId: string) {
@@ -40,13 +50,17 @@ export const runBatchService = {
         continue;
       }
 
-      await testRunService.create({
+      const testRunData: Prisma.TestRunUncheckedCreateInput = {
         testCaseId: testCase.id,
         runBatchId: batchId,
         status: result.status as TestStatus,
         durationMs: result.durationMs,
         errorMessage: result.errorMessage,
         traceUrl: result.traceUrl,
+      } as Prisma.TestRunUncheckedCreateInput;
+
+      await testRunService.create({
+        ...testRunData,
       });
     }
 

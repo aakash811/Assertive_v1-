@@ -1,14 +1,16 @@
 import { Hono } from "hono";
-
+import { ok, paginated } from "../lib/api-response";
 import type { HonoVariables } from "../types/hono";
-
 import { testCaseService } from "../services/test-case.service";
+import { AppError } from "../lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
 
 import {
   createTestCaseSchema,
   discoverTestCasesSchema,
   updateTestCaseSchema,
 } from "../validators/test-case.validator";
+import { TestStatus } from "@prisma/client";
 
 export const testCaseRoutes = new Hono<{
   Variables: HonoVariables;
@@ -16,31 +18,44 @@ export const testCaseRoutes = new Hono<{
 
 testCaseRoutes.post("/", async (c) => {
   const body = createTestCaseSchema.parse(await c.req.json());
-
   const projectId = c.get("projectId");
 
   const testCase = await testCaseService.create(projectId, body);
 
-  return c.json(testCase, 201);
+  return c.json(ok(testCase), 201);
 });
 
 testCaseRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
   const page = Number(c.req.query("page")) || 1;
-  const limit = Number(c.req.query("limit")) || 10;
+  const limit = Number(c.req.query("limit")) || 20;
+  const q = c.req.query("q");
+  const rawStatus = c.req.query("status");
+  const status =
+    rawStatus && Object.values(TestStatus).includes(rawStatus as TestStatus)
+      ? (rawStatus as TestStatus)
+      : undefined;
+  const owner = c.req.query("owner");
+  const tag = c.req.query("tag");
+  const flaky = c.req.query("flaky");
 
-  const testCases = await testCaseService.list(projectId, page, limit);
+  const testCases = await testCaseService.list(projectId, {
+    page,
+    limit,
+    q,
+    status,
+    owner,
+    tag,
+    flaky: flaky === undefined ? undefined : flaky === "true",
+  });
 
-  return c.json({
-    items: testCases.items,
-
-    pagination: {
+  return c.json(
+    paginated(testCases.items, {
       page,
       limit,
       total: testCases.total,
-      totalPages: Math.ceil(testCases.total / limit),
-    },
-  });
+    }),
+  );
 });
 
 testCaseRoutes.get("/by-unique-id/:uniqueId", async (c) => {
@@ -52,20 +67,18 @@ testCaseRoutes.get("/by-unique-id/:uniqueId", async (c) => {
   );
 
   if (!testCase) {
-    return c.json(
-      {
-        error: "Test case not found",
-      },
+    throw new AppError(
+      ERROR_CODES.TEST_CASE_NOT_FOUND,
+      "Test case not found",
       404,
     );
   }
 
-  return c.json(testCase);
+  return c.json(ok(testCase));
 });
 
 testCaseRoutes.post("/discover", async (c) => {
   const body = discoverTestCasesSchema.parse(await c.req.json());
-
   const projectId = c.get("projectId");
 
   const existing = await testCaseService.findByUniqueId(
@@ -74,7 +87,7 @@ testCaseRoutes.post("/discover", async (c) => {
   );
 
   if (existing) {
-    return c.json(existing);
+    return c.json(ok(existing));
   }
 
   const testCase = await testCaseService.create(projectId, {
@@ -82,7 +95,7 @@ testCaseRoutes.post("/discover", async (c) => {
     title: body.title,
   });
 
-  return c.json(testCase, 201);
+  return c.json(ok(testCase), 201);
 });
 
 testCaseRoutes.get("/:id", async (c) => {
@@ -92,37 +105,31 @@ testCaseRoutes.get("/:id", async (c) => {
   const testCase = await testCaseService.get(id, projectId);
 
   if (!testCase) {
-    return c.json(
-      {
-        error: "Test case not found",
-      },
+    throw new AppError(
+      ERROR_CODES.TEST_CASE_NOT_FOUND,
+      "Test case not found",
       404,
     );
   }
 
-  return c.json(testCase);
+  return c.json(ok(testCase));
 });
 
 testCaseRoutes.patch("/:id", async (c) => {
   const id = c.req.param("id");
-
   const body = updateTestCaseSchema.parse(await c.req.json());
-
   const projectId = c.get("projectId");
 
   const updated = await testCaseService.update(id, body, projectId);
 
-  return c.json(updated);
+  return c.json(ok(updated));
 });
 
 testCaseRoutes.delete("/:id", async (c) => {
   const id = c.req.param("id");
-
   const projectId = c.get("projectId");
 
   await testCaseService.delete(id, projectId);
 
-  return c.json({
-    success: true,
-  });
+  return c.json(ok({ success: true }));
 });

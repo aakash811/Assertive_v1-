@@ -11,6 +11,7 @@ enum TestStatus {
   PASSED
   FAILED
   SKIPPED
+  STALE
   UNKNOWN
 }
 
@@ -40,6 +41,7 @@ model Organization {
 
   members  OrganizationMember[]
   projects Project[]
+  apiKeys ApiKey[]
 }
 
 model OrganizationMember {
@@ -58,20 +60,25 @@ model OrganizationMember {
 
 model Project {
   id   String @id @default(uuid())
+
   name String
+
   slug String @unique
 
   organizationId String
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
-  apiKeys    ApiKey[]
-  testCases  TestCase[]
-  tags       Tag[]
-  suites     TestSuite[]
+  testCases TestCase[]
+
+  tags Tag[]
+
+  suites TestSuite[]
+
   runBatches RunBatch[]
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 }
 
@@ -86,14 +93,13 @@ model ApiKey {
 
   expiresAt DateTime?
 
-  projectId String
+  organizationId String
 
-  project Project @relation(fields: [projectId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([projectId])
+  @@index([organizationId])
 }
 
 model TestSuite {

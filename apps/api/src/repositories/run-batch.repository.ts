@@ -8,13 +8,53 @@ export const runBatchRepository = {
     });
   },
 
-  async findMany(projectId: string, page: number, limit: number) {
+  async findMany(
+    projectId: string,
+    filters: {
+      page: number;
+      limit: number;
+      q?: string;
+      environment?: string;
+      triggeredBy?: string;
+    },
+  ) {
+    const { page, limit, q, environment, triggeredBy } = filters;
     const skip = (page - 1) * limit;
+    const where: Prisma.RunBatchWhereInput = {
+      projectId,
+    };
+    if (q) {
+      where.OR = [
+        {
+          branch: {
+            contains: q,
+            mode: "insensitive",
+          },
+        },
+
+        {
+          commitSha: {
+            contains: q,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
+    if (environment) {
+      where.environment = {
+        equals: environment,
+        mode: "insensitive",
+      };
+    }
+    if (triggeredBy) {
+      where.triggeredBy = {
+        equals: triggeredBy,
+        mode: "insensitive",
+      };
+    }
     const [items, total] = await Promise.all([
       prisma.runBatch.findMany({
-        where: {
-          projectId,
-        },
+        where,
         orderBy: {
           createdAt: "desc",
         },
@@ -23,9 +63,7 @@ export const runBatchRepository = {
       }),
 
       prisma.runBatch.count({
-        where: {
-          projectId,
-        },
+        where,
       }),
     ]);
 
@@ -40,6 +78,26 @@ export const runBatchRepository = {
       where: {
         id,
         projectId,
+      },
+
+      include: {
+        runs: {
+          include: {
+            testCase: {
+              select: {
+                id: true,
+
+                title: true,
+
+                uniqueId: true,
+              },
+            },
+          },
+
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
   },

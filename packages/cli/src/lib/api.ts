@@ -1,7 +1,7 @@
-import { loadConfig } from "../utils/load-config";
+import { loadAssertiveConfig } from "@assertive/shared";
 
 function validateConfig() {
-  const config = loadConfig();
+  const config = loadAssertiveConfig();
 
   if (!config.apiUrl) {
     throw new Error("apiUrl is missing");

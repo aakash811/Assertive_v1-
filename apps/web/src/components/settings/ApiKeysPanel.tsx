@@ -10,21 +10,41 @@ type Props = {
 
 export function ApiKeysPanel({ initialKeys }: Props) {
   const [keys, setKeys] = useState(initialKeys);
-
   const [name, setName] = useState("");
 
   async function handleCreate() {
-    const result = await createApiKey(name);
+    if (!name.trim()) {
+      return;
+    }
 
+    const result = await createApiKey(name);
     alert(`Copy now:\n\n${result.key}`);
 
-    window.location.reload();
+    setKeys((prev) => [
+      {
+        id: result.id,
+        name,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
+
+    setName("");
   }
 
   async function handleDelete(id: string) {
     await revokeApiKey(id);
+    setKeys((prev) => prev.filter((key) => key.id !== id));
+  }
 
-    setKeys(keys.filter((key) => key.id !== id));
+  if (!keys.length) {
+    return (
+      <div className="rounded-lg border p-6">
+        <h2 className="mb-4 text-xl font-semibold">API Keys</h2>
+        <div className="text-gray-500">No API keys yet.</div>
+      </div>
+    );
   }
 
   return (
@@ -51,11 +71,8 @@ export function ApiKeysPanel({ initialKeys }: Props) {
         <thead>
           <tr>
             <th>Name</th>
-
             <th>Status</th>
-
             <th>Created</th>
-
             <th></th>
           </tr>
         </thead>
@@ -64,16 +81,13 @@ export function ApiKeysPanel({ initialKeys }: Props) {
           {keys.map((key) => (
             <tr key={key.id}>
               <td>{key.name}</td>
-
               <td>{key.isActive ? "Active" : "Revoked"}</td>
-
               <td>
                 {new Date(key.createdAt)
                   .toISOString()
                   .replace("T", " ")
                   .slice(0, 19)}
               </td>
-
               <td>
                 <button
                   onClick={() => handleDelete(key.id)}

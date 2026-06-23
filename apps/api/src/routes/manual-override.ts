@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { ok } from "../lib/api-response";
 import { apiKeyAuth } from "../middleware/api-key-auth";
 import type { HonoVariables } from "../types/hono";
 import { manualOverrideService } from "../services/manual-override.service";
@@ -14,10 +15,12 @@ manualOverrideRoutes.patch("/test-cases/:id/override", async (c) => {
   const body = manualOverrideValidator.parse(await c.req.json());
 
   return c.json(
-    await manualOverrideService.overrideStatus(
-      c.req.param("id"),
-      body.status,
-      body.comment,
+    ok(
+      await manualOverrideService.overrideStatus(
+        c.req.param("id"),
+        body.status,
+        body.comment,
+      ),
     ),
   );
 });

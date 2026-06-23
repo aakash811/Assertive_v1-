@@ -1,6 +1,11 @@
 {
   "apiUrl": "http://localhost:4321",
-  "apiKey": "ask_live_2a5f3dd33680e9b5531603466c2e6359e6ace73f3182d85f",
+  "apiKey": "ask_live_b47c6e2295cbb82f6f769fd9ab36076f67c870f07be0022e",
   "framework": "playwright",
-  "projectId": "b9236281-7975-471b-b4ae-2e1f73716fae"
+  "projectId": "6f74a359-5b65-489d-a017-230ac1e6dad4",
+  "include": ["packages/playground/tests/**/*.spec.ts"],
+  "ignore": ["**/node_modules/**", "**/dist/**"],
+  "sync": {
+    "staleDays": 30
+  }
 }

@@ -4,7 +4,7 @@ export const apiKeyRepository = {
   create(data: {
     name: string;
     hashedKey: string;
-    projectId: string;
+    organizationId: string;
     expiresAt?: Date;
   }) {
     return prisma.apiKey.create({
@@ -12,10 +12,10 @@ export const apiKeyRepository = {
     });
   },
 
-  findMany(projectId: string) {
+  findMany(organizationId: string) {
     return prisma.apiKey.findMany({
       where: {
-        projectId,
+        organizationId,
         isActive: true,
       },
       orderBy: {

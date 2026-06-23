@@ -10,8 +10,12 @@ type Props = {
 
 export default async function RunBatchPage({ params }: Props) {
   const { id } = await params;
-
   const batch = await getRunBatch(id);
+
+  const successRate =
+    batch.totalCount === 0
+      ? 0
+      : Math.round((batch.passedCount / batch.totalCount) * 100);
 
   return (
     <div className="space-y-6">
@@ -67,19 +71,10 @@ export default async function RunBatchPage({ params }: Props) {
       </div>
 
       <div className="rounded-lg border p-4">
-        <div className="mb-2 text-sm text-gray-500">Success Rate</div>
+        <div className="mb-2 flex justify-between text-sm">
+          <span>Success Rate</span>
 
-        <div className="h-4 overflow-x-auto rounded bg-gray-200">
-          <div
-            className="h-full bg-green-500"
-            style={{
-              width: `${
-                batch.totalCount === 0
-                  ? 0
-                  : (batch.passedCount / batch.totalCount) * 100
-              }%`,
-            }}
-          />
+          <span>{successRate}%</span>
         </div>
       </div>
 

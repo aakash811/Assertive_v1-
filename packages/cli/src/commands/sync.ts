@@ -6,6 +6,7 @@ import { findDuplicates } from "../utils/find-duplicates.js";
 import type { SyncTestCase } from "@assertive/shared";
 import { apiPost } from "../lib/api.js";
 import { getChangedFiles } from "../utils/get-changed-files.js";
+import { loadAssertiveConfig } from "@assertive/shared";
 
 export const syncCommand = new Command("sync")
   .description("Sync tests with Assertive")
@@ -13,6 +14,21 @@ export const syncCommand = new Command("sync")
   .option("--debug", "Show sync payload")
   .action(async (options) => {
     try {
+      const config = loadAssertiveConfig();
+
+      if (!config.projectId) {
+        throw new Error(
+          "Missing projectId in .assertive.json. Run 'assertive link <projectId>' first.",
+        );
+      }
+      if (!config.apiKey) {
+        throw new Error("Missing apiKey");
+      }
+
+      if (!config.apiUrl) {
+        throw new Error("Missing apiUrl");
+      }
+
       console.log("Discovering tests...");
       const files = await scanFiles();
       console.log(`Found ${files.length} test files`);
@@ -59,7 +75,9 @@ export const syncCommand = new Command("sync")
         console.log(JSON.stringify(testCases, null, 2));
       }
 
-      const result = await apiPost("/api/sync", { testCases });
+      const result = await apiPost(`/api/projects/${config.projectId}/sync`, {
+        testCases,
+      });
 
       console.log("");
       console.log(chalk.green(`✓ ${result.synced} test cases synced`));

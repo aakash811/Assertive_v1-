@@ -42,13 +42,15 @@ describe("testCaseService", () => {
   });
 
   it("lists test cases", async () => {
-    await testCaseService.list("project-1", 1, 20);
+    await testCaseService.list("project-1", {
+      page: 1,
+      limit: 20,
+    });
 
-    expect(testCaseRepository.findMany).toHaveBeenCalledWith(
-      "project-1",
-      1,
-      20,
-    );
+    expect(testCaseRepository.findMany).toHaveBeenCalledWith("project-1", {
+      page: 1,
+      limit: 20,
+    });
   });
 
   it("gets test case", async () => {

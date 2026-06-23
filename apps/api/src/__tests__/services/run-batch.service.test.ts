@@ -50,13 +50,15 @@ describe("runBatchService", () => {
   });
 
   it("lists batches", async () => {
-    await runBatchService.list("project-1", 1, 20);
+    await runBatchService.list("project-1", {
+      page: 1,
+      limit: 20,
+    });
 
-    expect(runBatchRepository.findMany).toHaveBeenCalledWith(
-      "project-1",
-      1,
-      20,
-    );
+    expect(runBatchRepository.findMany).toHaveBeenCalledWith("project-1", {
+      page: 1,
+      limit: 20,
+    });
   });
 
   it("gets batch", async () => {

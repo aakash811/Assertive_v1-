@@ -3,4 +3,6 @@ export interface Project {
   name: string;
 }
 
+export * from "./constants/error-codes";
 export * from "./sync";
+export * from "./config";

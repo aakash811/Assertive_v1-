@@ -1,9 +1,9 @@
-import { getTestCase, getTestCaseHistory, getTestRuns } from "@/lib/api";
 import { HistoryTimeline } from "@/components/test-cases/HistoryTimeline";
 import { MetadataPanel } from "@/components/test-cases/MetadataPanel";
 import { RecentRuns } from "@/components/test-cases/RecentRuns";
 import { TagsPanel } from "@/components/test-cases/TagsPanel";
 import { OverrideStatusModal } from "@/components/test-cases/OverrideStatusModal";
+import { getTestCase } from "@/lib/api";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -12,8 +12,9 @@ type Props = {
 export default async function TestCasePage({ params }: Props) {
   const { id } = await params;
   const testCase = await getTestCase(id);
-  const history = await getTestCaseHistory(id);
-  const runs = await getTestRuns();
+  const history = testCase.history ?? [];
+  console.log(JSON.stringify(history, null, 2));
+  const runs = testCase.runs ?? [];
 
   return (
     <div className="space-y-6">
@@ -58,12 +59,9 @@ export default async function TestCasePage({ params }: Props) {
       </div>
 
       <MetadataPanel testCase={testCase} />
-
-      <RecentRuns items={runs.items} testCaseId={id} />
-
-      <HistoryTimeline items={history.items} />
-
       <TagsPanel tags={testCase.tags ?? []} />
+      <RecentRuns items={runs} />
+      <HistoryTimeline items={history} />
     </div>
   );
 }

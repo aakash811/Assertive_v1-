@@ -16,9 +16,16 @@ export const initCommand = new Command("init")
 
     const config = {
       apiUrl: "http://localhost:4321",
-      apiKey: "API-KEY",
+      apiKey: "",
       framework: "playwright",
+      projectId: "",
     };
+
+    console.log("");
+    console.log("Open .assertive.json and fill:");
+    console.log("- apiKey");
+    console.log("- projectId");
+    console.log("");
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 

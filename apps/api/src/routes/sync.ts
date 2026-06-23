@@ -1,8 +1,11 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { apiKeyAuth } from "../middleware/api-key-auth";
 import type { HonoVariables } from "../types/hono";
 import { syncService } from "../services/sync.service";
-import { SyncTestCase } from "@assertive/shared";
+import { ERROR_CODES, type SyncTestCase } from "@assertive/shared";
+import { AppError } from "../lib/app-error";
+import { ok } from "../lib/api-response";
 
 export const syncRoutes = new Hono<{
   Variables: HonoVariables;
@@ -10,12 +13,21 @@ export const syncRoutes = new Hono<{
 
 syncRoutes.use("*", apiKeyAuth);
 
-syncRoutes.post("/", async (c) => {
+async function handleSync(c: Context<{ Variables: HonoVariables }>) {
   const projectId = c.get("projectId");
+  const routeProjectId = c.req.param("id");
+
+  if (routeProjectId && routeProjectId !== projectId) {
+    throw new AppError(ERROR_CODES.PERMISSION_DENIED, "Project mismatch", 403);
+  }
 
   const body = await c.req.json<{
     testCases: SyncTestCase[];
   }>();
 
-  return c.json(await syncService.sync(projectId, body.testCases));
-});
+  return c.json(ok(await syncService.sync(projectId, body.testCases)));
+}
+
+syncRoutes.post("/", handleSync);
+
+syncRoutes.post("/projects/:id/sync", handleSync);

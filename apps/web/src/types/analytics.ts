@@ -1,10 +1,17 @@
 export type AnalyticsSummary = {
   totalTests: number;
   totalRuns: number;
+  flakyTests: number;
+  staleRuns: number;
   passedRuns: number;
   failedRuns: number;
   passRate: number;
   failureRate: number;
+};
+
+export type StatusDistibution = {
+  name: string;
+  value: number;
 };
 
 export type FailureItem = {

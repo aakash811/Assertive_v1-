@@ -22,6 +22,9 @@ export const syncService = {
 
     for (const test of testCases) {
       const previous = existingMap.get(test.uniqueId);
+      const testCaseWhereUnique: Prisma.TestCaseWhereUniqueInput = {
+        uniqueId: test.uniqueId,
+      } as Prisma.TestCaseWhereUniqueInput;
 
       let suiteId: string | undefined;
 
@@ -46,9 +49,7 @@ export const syncService = {
       }
 
       const dbTest = await prisma.testCase.upsert({
-        where: {
-          uniqueId: test.uniqueId,
-        },
+        where: testCaseWhereUnique,
 
         create: {
           uniqueId: test.uniqueId,

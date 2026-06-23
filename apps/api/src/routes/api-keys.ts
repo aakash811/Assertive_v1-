@@ -1,53 +1,55 @@
 import { Hono } from "hono";
+import { ok } from "../lib/api-response";
 import { apiKeyService } from "../services/api-key.service";
 import { apiKeyRepository } from "../repositories/api-key.repository";
-import { prisma } from "@assertive/database";
+import { prisma } from "../lib/prisma";
+import { AppError } from "../lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
 
 export const apiKeyRoutes = new Hono();
 
-// Create a new API key
 apiKeyRoutes.post("/", async (c) => {
   const body = await c.req.json();
 
-  const project = await prisma.project.findFirst();
+  const organization = await prisma.organization.findFirst();
 
-  if (!project) {
-    return c.json(
-      {
-        error: "No Project found",
-      },
-      400,
+  if (!organization) {
+    throw new AppError(
+      ERROR_CODES.PROJECT_NOT_FOUND,
+      "Organization not found. Create one first.",
+      404,
     );
   }
 
-  const result = await apiKeyService.create(project.id, body.name);
+  const result = await apiKeyService.create(organization.id, body.name);
 
-  return c.json({
-    id: result.apiKey.id,
-    key: result.rawKey,
-  });
+  return c.json(
+    ok({
+      id: result.apiKey.id,
+
+      key: result.rawKey,
+    }),
+  );
 });
 
-// Get all API keys for a project
 apiKeyRoutes.get("/", async (c) => {
-  const project = await prisma.project.findFirst();
+  const organization = await prisma.organization.findFirst();
 
-  if (!project) {
-    return c.json([]);
+  if (!organization) {
+    return c.json(ok([]));
   }
 
-  const keys = await apiKeyRepository.findMany(project.id);
+  const keys = await apiKeyRepository.findMany(organization.id);
 
-  return c.json(keys);
+  return c.json(ok(keys));
 });
 
-//Delete an API key
 apiKeyRoutes.delete("/:id", async (c) => {
-  const id = c.req.param("id");
+  await apiKeyRepository.revoke(c.req.param("id"));
 
-  await apiKeyRepository.revoke(id);
-
-  return c.json({
-    success: true,
-  });
+  return c.json(
+    ok({
+      success: true,
+    }),
+  );
 });

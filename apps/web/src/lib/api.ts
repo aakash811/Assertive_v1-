@@ -1,251 +1,361 @@
-const API_URL = "http://localhost:4321/api";
-const API_KEY = "ask_live_2a5f3dd33680e9b5531603466c2e6359e6ace73f3182d85f";
+import type {
+  AnalyticsSummary,
+  FailureItem,
+  FlakyTest,
+  SlowTest,
+  StatusDistibution,
+} from "@/types/analytics";
+import type { ApiKey, createdApiKey } from "@/types/api-key";
+import type { RunBatch } from "@/types/run-batch";
+import type { RunResult } from "@/types/run-result";
+import type { HistoryItem, TestCase, TestRun } from "@/types/test-case";
+import type { PaginatedData } from "@/types/api";
+import { Project } from "@/types/project";
+import type { Organization, Member } from "@/types/organization";
 
-//GET -- Metrics Summary
-export async function getMetricsSummary() {
-  const response = await fetch(`${API_URL}/metrics/summary`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    cache: "no-store",
-  });
+const API_BASE_PATH = "/api/assertive";
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch metrics summary: ${response.statusText}`);
-  }
+//
+// URL Helpers
+//
 
-  return response.json();
+function apiUrl(path: string) {
+  const origin =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_APP_URL ??
+        process.env.APP_URL ??
+        "http://localhost:3000");
+
+  return new URL(`${API_BASE_PATH}${path}`, origin).toString();
 }
 
-//GET -- Test Cases List
-export async function getTestCases(page = 1, limit = 20) {
-  const response = await fetch(
-    `${API_URL}/test-cases?page=${page}&limit=${limit}`,
+function authHeaders() {
+  return {};
+}
+
+//
+// Transport Types
+//
+
+type ApiSuccess<T> = {
+  success: true;
+  data: T;
+};
+
+type ApiError = {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+};
+
+type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
+type PaginatedApiSuccess<T> = {
+  success: true;
+  items: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+};
+
+type PaginatedApiResponse<T> = PaginatedApiSuccess<T> | ApiError;
+
+//
+// Generic Request Helpers
+//
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = { ...(init?.headers ?? {}) };
+  const response = await fetch(apiUrl(path), { ...init, headers });
+  const json = (await response.json()) as ApiResponse<T>;
+
+  if (!response.ok) {
+    throw new Error(json.success ? response.statusText : json.error.message);
+  }
+
+  if (!json.success) {
+    throw new Error(json.error.message);
+  }
+
+  return json.data;
+}
+
+async function paginatedRequest<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<PaginatedData<T>> {
+  const headers = { ...(init?.headers ?? {}) };
+
+  const response = await fetch(apiUrl(path), { ...init, headers });
+  const json = (await response.json()) as PaginatedApiResponse<T>;
+
+  console.log("Paginated", path, json);
+  if (!response.ok) {
+    throw new Error(json.success ? response.statusText : json.error.message);
+  }
+
+  if (!json.success) {
+    throw new Error(json.error.message);
+  }
+
+  return {
+    items: json.items,
+    pagination: json.pagination,
+  };
+}
+
+//
+// Metrics
+//
+
+export function getMetricsSummary(): Promise<AnalyticsSummary> {
+  return request<AnalyticsSummary>("/metrics/summary", {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+}
+
+//
+// Test Cases
+//
+
+export function getTestCases(params?: {
+  page?: number;
+  limit?: number;
+  q?: string;
+  status?: string;
+  owner?: string;
+  tag?: string;
+  flaky?: boolean;
+}): Promise<PaginatedData<TestCase>> {
+  const search = new URLSearchParams();
+
+  if (params?.page) {
+    search.set("page", String(params.page));
+  }
+
+  if (params?.limit) {
+    search.set("limit", String(params.limit));
+  }
+
+  if (params?.q) {
+    search.set("q", params.q);
+  }
+
+  if (params?.status) {
+    search.set("status", params.status);
+  }
+
+  if (params?.owner) {
+    search.set("owner", params.owner);
+  }
+
+  if (params?.tag) {
+    search.set("tag", params.tag);
+  }
+
+  if (params?.flaky) {
+    search.set("flaky", "true");
+  }
+
+  return paginatedRequest<TestCase>(`/test-cases?${search.toString()}`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+}
+
+export function getTestCase(id: string): Promise<TestCase> {
+  return request<TestCase>(`/test-cases/${id}`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+}
+
+export function getTestCaseHistory(id: string): Promise<HistoryItem[]> {
+  return request<HistoryItem[]>(`/test-cases/${id}/history`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+}
+
+//
+// Test Runs
+//
+
+export function getTestRuns(
+  page = 1,
+  limit = 20,
+): Promise<PaginatedData<TestRun>> {
+  return paginatedRequest<TestRun>(`/test-runs?page=${page}&limit=${limit}`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+}
+
+//
+// Run Batches
+//
+
+export function getRunBatches(
+  filters: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    environment?: string;
+    triggeredBy?: string;
+  } = {},
+): Promise<PaginatedData<RunBatch>> {
+  const params = new URLSearchParams();
+
+  params.set("page", String(filters.page ?? 1));
+
+  params.set("limit", String(filters.limit ?? 20));
+
+  if (filters.q) {
+    params.set("q", filters.q);
+  }
+
+  if (filters.environment) {
+    params.set("environment", filters.environment);
+  }
+
+  if (filters.triggeredBy) {
+    params.set("triggeredBy", filters.triggeredBy);
+  }
+
+  return paginatedRequest<RunBatch>(
+    `/run-batches?${params.toString()}`,
+
     {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-      },
+      headers: authHeaders(),
+
       cache: "no-store",
     },
   );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch test cases: ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
-//GET -- Test Case Details
-export async function getTestCase(id: string) {
-  const response = await fetch(`${API_URL}/test-cases/${id}`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+export function getRunBatch(id: string): Promise<RunBatch> {
+  return request<RunBatch>(`/run-batches/${id}`, {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch test case: ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
-//GET -- Test Case History
-export async function getTestCaseHistory(id: string) {
-  const response = await fetch(`${API_URL}/test-cases/${id}/history`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+//
+// Analytics
+//
+
+export function getAnalyticsSummary(): Promise<AnalyticsSummary> {
+  return request<AnalyticsSummary>("/analytics/summary", {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch test case history: ${response.statusText}`,
-    );
-  }
-
-  return response.json();
 }
 
-//GET -- Test Runs List
-export async function getTestRuns(page = 1, limit = 20) {
-  const response = await fetch(
-    `${API_URL}/test-runs?page=${page}&limit=${limit}`,
-    {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      cache: "no-store",
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch test runs: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-//GET -- Run Batch Details
-export async function getRunBatches(page = 1, limit = 20) {
-  const response = await fetch(
-    `${API_URL}/run-batches?page=${page}&limit=${limit}`,
-    {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      cache: "no-store",
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch run batches: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-//GET -- Run Batch Details
-export async function getRunBatch(id: string) {
-  const response = await fetch(`${API_URL}/run-batches/${id}`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+export function getMostFailingTests(): Promise<FailureItem[]> {
+  return request<FailureItem[]>("/analytics/failures", {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  return response.json();
 }
 
-// GET -- Analytics Summary
-export async function getAnalyticsSummary() {
-  const response = await fetch(`${API_URL}/analytics/summary`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+export function getSlowestTests(): Promise<SlowTest[]> {
+  return request<SlowTest[]>("/analytics/slowest", {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch analytics summary: ${response.statusText}`,
-    );
-  }
-
-  return response.json();
 }
 
-//GET -- Most Failing Tests
-export async function getMostFailingTests() {
-  const response = await fetch(`${API_URL}/analytics/failures`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+export function getFlakyTests(): Promise<FlakyTest[]> {
+  return request<FlakyTest[]>("/analytics/flaky", {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch most failing tests: ${response.statusText}`,
-    );
-  }
-
-  return response.json();
 }
 
-//GET -- Slowest Tests
-export async function getSlowestTests() {
-  const response = await fetch(`${API_URL}/analytics/slowest`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+export function getStatusDistribution(): Promise<StatusDistibution[]> {
+  return request<StatusDistibution[]>("/analytics/status-distribution", {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch slowest tests: ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
-//GET -- Flaky Tests
-export async function getFlakyTests() {
-  const response = await fetch(`${API_URL}/analytics/flaky`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    cache: "no-store",
-  });
+//
+// Manual Override
+//
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch flaky tests: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-//GET -- Status Distribution
-export async function getStatusDistribution() {
-  const response = await fetch(`${API_URL}/analytics/status-distribution`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    cache: "no-store",
-  });
-
-  return response.json();
-}
-
-//POST -- Manual Overrides
-export async function overrideTestCaseStatus(
+export function overrideTestCaseStatus(
   id: string,
   status: "PASSED" | "FAILED" | "SKIPPED",
   comment: string,
-) {
-  const response = await fetch(
-    `${API_URL}/manual-overrides/test-cases/${id}/status`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status, comment }),
+): Promise<void> {
+  return request<void>(`/manual-overrides/test-cases/${id}/status`, {
+    method: "POST",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json",
     },
-  );
 
-  if (!response.ok) {
-    throw new Error(
-      `Failed to override test case status: ${response.statusText}`,
-    );
-  }
-
-  return response.json();
+    body: JSON.stringify({
+      status,
+      comment,
+    }),
+  });
 }
 
-//GET -- Project Settings
-export async function getProject() {
-  const response = await fetch(`${API_URL}/project`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+//
+// Projects
+//
+export function getProjects() {
+  return request<Project[]>("/projects", {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  return response.json();
 }
 
-//PATCH -- Update Project Settings
-export async function updateProject(name: string) {
-  const response = await fetch(`${API_URL}/project`, {
-    method: "PATCH",
+export function createProject(
+  name: string,
+  slug: string,
+  organizationId: string,
+) {
+  return request<Project>("/projects", {
+    method: "POST",
 
     headers: {
-      Authorization: `Bearer ${API_KEY}`,
+      ...authHeaders(),
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify({
+      name,
+      slug,
+      organizationId,
+    }),
+  });
+}
+
+//
+// Project
+//
+
+export function getProject(): Promise<Project> {
+  return request<Project>("/project", {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+}
+
+export function updateProject(name: string): Promise<Project> {
+  return request<Project>("/project", {
+    method: "PATCH",
+    headers: {
+      ...authHeaders(),
       "Content-Type": "application/json",
     },
 
@@ -253,42 +363,64 @@ export async function updateProject(name: string) {
       name,
     }),
   });
-
-  return response.json();
 }
 
-//GET -- API Keys
-export async function getApiKeys() {
-  const response = await fetch(`${API_URL}/api-keys`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+//
+// API Keys
+//
+
+export function getApiKeys(): Promise<ApiKey[]> {
+  return request<ApiKey[]>("/api-keys", {
+    headers: authHeaders(),
     cache: "no-store",
   });
-
-  return response.json();
 }
 
-//POST -- Create API Key
-export async function createApiKey(name: string) {
-  const response = await fetch(`${API_URL}/api-keys`, {
+export function createApiKey(name: string): Promise<createdApiKey> {
+  return request<createdApiKey>("/api-keys", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${API_KEY}`,
+      ...authHeaders(),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ name }),
-  });
 
-  return response.json();
+    body: JSON.stringify({
+      name,
+    }),
+  });
 }
 
-//DELETE -- Revoke API Key
-export async function revokeApiKey(id: string) {
-  await fetch(`${API_URL}/api-keys/${id}`, {
+export function revokeApiKey(id: string): Promise<void> {
+  return request<void>(`/api-keys/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
+    headers: authHeaders(),
   });
+}
+
+//
+// Organization
+//
+
+export function getOrganization(): Promise<Organization> {
+  return request<Organization>(
+    "/organization",
+
+    {
+      headers: authHeaders(),
+
+      cache: "no-store",
+    },
+  );
+}
+
+export function getOrganizationMembers(): Promise<Member[]> {
+  return request<Member[]>(
+    "/organization/members",
+
+    {
+      headers: authHeaders(),
+
+      cache: "no-store",
+    },
+  );
 }

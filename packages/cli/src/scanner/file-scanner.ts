@@ -1,11 +1,11 @@
 import path from "node:path";
 import fg from "fast-glob";
 import { findProjectRoot } from "../utils/find-project-root.js";
-import { loadConfig } from "../utils/load-config.js";
+import { loadAssertiveConfig } from "@assertive/shared";
 
 export async function scanFiles() {
   const root = findProjectRoot();
-  const config = loadConfig();
+  const config = loadAssertiveConfig();
 
   const patterns = config.include ?? ["**/*.spec.ts", "**/*.test.ts"];
 

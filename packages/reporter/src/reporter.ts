@@ -1,4 +1,5 @@
 import { AssertiveClient } from "./client";
+import { BatchResult } from "./types";
 import { resolveConfig, type ReporterConfig } from "./config";
 import { enqueue, loadQueue, saveQueue } from "./offline-queue";
 import { getCIContext } from "./context";
@@ -12,14 +13,7 @@ import {
 } from "@playwright/test/reporter";
 
 import { metadataStore } from "@assertive/helper";
-
-interface BatchResult {
-  uniqueId: string;
-  status: string;
-  durationMs: number;
-  errorMessage?: string;
-  traceUrl?: string | null;
-}
+import fs from "node:fs";
 
 export class AssertiveReporter implements Reporter {
   private client: AssertiveClient;
@@ -68,7 +62,8 @@ export class AssertiveReporter implements Reporter {
       this.runBatchId = batch.id;
 
       console.log(`[Assertive] Run Batch: ${batch.id}`);
-    } catch {
+    } catch (error) {
+      console.log(error);
       this.offlineMode = true;
 
       this.runBatchId = `offline-${Date.now()}`;
@@ -100,6 +95,21 @@ export class AssertiveReporter implements Reporter {
       traceUrl: traceAttachment?.path ?? null,
     };
 
+    if (traceAttachment?.path) {
+      try {
+        const trace = await this.client.requestTraceUploadUrl();
+        const traceContent = fs.readFileSync(traceAttachment.path);
+
+        await this.client.uploadTrace(trace.uploadUrl, traceContent);
+
+        runResult.traceUrl = trace.traceUrl;
+      } catch (error) {
+        console.warn(
+          `[Assertive] Failed to upload trace for ${test.title}: ${error instanceof Error ? error.message : error}`,
+        );
+      }
+    }
+
     if (this.offlineMode) {
       this.results.push(runResult);
       return;
@@ -115,12 +125,9 @@ export class AssertiveReporter implements Reporter {
       );
 
       console.warn(`[Assertive] Discovered TestCase: ${test.title}`);
-
-      return;
     }
 
     this.results.push(runResult);
-
     console.log(`[Assertive] Uploaded ${test.title}`);
   }
 

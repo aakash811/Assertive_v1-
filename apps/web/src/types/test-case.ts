@@ -8,15 +8,22 @@ export type TestCase = {
   priority: string | null;
   testType: string | null;
   customFields: Record<string, unknown> | null;
-  lastStatus: string;
+  lastStatus: "PASSED" | "FAILED" | "SKIPPED" | "STALE" | "UNKNOWN";
+  syncState: "SYNCED" | "STALE";
   isFlaky: boolean;
   flakyScore: number;
-  syncState: string;
   isManualOverride: boolean;
   projectId: string;
   suiteId: string | null;
   createdAt: string;
   updatedAt: string;
+  runs?: TestRun[];
+  history?: HistoryItem[];
+  tags?: Tag[];
+  suite?: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 export type Tag = {
@@ -40,17 +47,12 @@ export type MetadataTestCase = {
   id: string;
   uniqueId: string;
   title: string;
-
   owner?: string | null;
   priority?: string | null;
   testType?: string | null;
-
-  syncState: string;
-
-  lastStatus: string;
-
+  syncState: "SYNCED" | "STALE";
+  lastStatus: "PASSED" | "FAILED" | "SKIPPED" | "STALE" | "UNKNOWN";
   isFlaky: boolean;
-
   createdAt: string;
   updatedAt: string;
 };
@@ -58,11 +60,7 @@ export type MetadataTestCase = {
 export type HistoryItem = {
   id: string;
   action: string;
-  changes?: {
-    status?: string;
-    from?: string;
-    to?: string;
-  };
+  changes?: Record<string, unknown> | null;
   comment?: string | null;
   changedBy?: string | null;
   createdAt: string;

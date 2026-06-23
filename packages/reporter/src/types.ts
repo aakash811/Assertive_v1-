@@ -27,3 +27,9 @@ export interface BatchResult {
   errorMessage?: string;
   traceUrl?: string | null;
 }
+
+export interface TraceUploadResponse {
+  uploadUrl: string;
+  traceKey: string;
+  traceUrl: string;
+}

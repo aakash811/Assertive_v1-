@@ -1,7 +1,6 @@
 import { Hono } from "hono";
-
+import { paginated } from "../lib/api-response";
 import type { HonoVariables } from "../types/hono";
-
 import { historyService } from "../services/history.service";
 
 export const historyRoutes = new Hono<{
@@ -13,15 +12,13 @@ historyRoutes.get("/test-cases/:id/history", async (c) => {
   const limit = Number(c.req.query("limit")) || 20;
   const history = await historyService.list(c.req.param("id"), page, limit);
 
-  return c.json({
-    items: history.items,
-    pagination: {
+  return c.json(
+    paginated(history.items, {
       page,
       limit,
       total: history.total,
-      totalPages: Math.ceil(history.total / limit),
-    },
-  });
+    }),
+  );
 });
 
 historyRoutes.get("/history/:uniqueId", async (c) => {
@@ -36,14 +33,11 @@ historyRoutes.get("/history/:uniqueId", async (c) => {
     limit,
   );
 
-  return c.json({
-    items: history.items,
-
-    pagination: {
+  return c.json(
+    paginated(history.items, {
       page,
       limit,
       total: history.total,
-      totalPages: Math.ceil(history.total / limit),
-    },
-  });
+    }),
+  );
 });

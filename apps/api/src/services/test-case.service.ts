@@ -1,4 +1,5 @@
 import { testCaseRepository } from "../repositories/test-case.repository";
+import type { TestStatus } from "@prisma/client";
 
 export const testCaseService = {
   create(
@@ -15,8 +16,19 @@ export const testCaseService = {
     });
   },
 
-  list(projectId: string, page: number, limit: number) {
-    return testCaseRepository.findMany(projectId, page, limit);
+  list(
+    projectId: string,
+    filters: {
+      page: number;
+      limit: number;
+      q?: string;
+      status?: TestStatus;
+      owner?: string;
+      tag?: string;
+      flaky?: boolean;
+    },
+  ) {
+    return testCaseRepository.findMany(projectId, filters);
   },
 
   get(id: string, projectId: string) {

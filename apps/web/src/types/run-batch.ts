@@ -1,3 +1,6 @@
+import type { PaginatedData } from "./api";
+import type { RunResult } from "./run-result";
+
 export type RunBatch = {
   id: string;
   branch?: string | null;
@@ -9,15 +12,7 @@ export type RunBatch = {
   skippedCount: number;
   createdAt: string;
   triggeredBy?: string | null;
+  runs?: RunResult[];
 };
 
-export type RunBatchResponse = {
-  items: RunBatch[];
-
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-};
+export type RunBatchResponse = PaginatedData<RunBatch>;

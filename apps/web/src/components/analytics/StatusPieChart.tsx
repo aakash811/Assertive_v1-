@@ -10,6 +10,11 @@ type Props = {
 };
 
 export function StatusPieChart({ data }: Props) {
+  if (!data.length) {
+    return (
+      <div className="rounded-lg border p-8 text-center">No status data</div>
+    );
+  }
   return (
     <div className="rounded-lg border bg-white p-4">
       <h2 className="mb-4 text-lg font-semibold">Status Distribution</h2>

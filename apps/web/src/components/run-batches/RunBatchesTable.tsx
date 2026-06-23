@@ -38,7 +38,10 @@ export function RunBatchesTable({ items }: Props) {
                 : ((batch.passedCount / batch.totalCount) * 100).toFixed(1);
 
             return (
-              <tr key={batch.id} className="border-b">
+              <tr
+                key={batch.id}
+                className="border-b transition-colors hover:bg-neutral-800"
+              >
                 <td className="px-4 py-3">
                   <Link
                     href={`/runs/${batch.id}`}

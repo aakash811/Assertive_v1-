@@ -14,7 +14,7 @@ export function RunResultsTable({ items }: Props) {
     );
   }
   return (
-    <div className="overflow-x-auto rounded-lg border bg-white">
+    <div className="overflow-x-auto rounded-lg border bg-emerald-900">
       <table className="w-full">
         <thead>
           <tr className="border-b">
@@ -32,7 +32,10 @@ export function RunResultsTable({ items }: Props) {
 
         <tbody>
           {items.map((run) => (
-            <tr key={run.id} className="border-b">
+            <tr
+              key={run.id}
+              className="border-b transition-colors hover:bg-emerald-700"
+            >
               <td className="px-4 py-3">
                 {run.testCase?.title ?? run.testCaseId}
               </td>

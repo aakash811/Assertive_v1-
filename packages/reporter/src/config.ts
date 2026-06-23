@@ -18,7 +18,7 @@ export const defaultConfig = {
 export function resolveConfig(
   config: Partial<ReporterConfig> = {},
 ): ReporterConfig {
-  return {
+  const resolved = {
     apiUrl:
       config.apiUrl ?? process.env.ASSERTIVE_API_URL ?? "http://localhost:4321",
 
@@ -30,4 +30,11 @@ export function resolveConfig(
 
     retries: config.retries ?? defaultConfig.retries,
   };
+
+  console.log("[Assertive Reporter]", {
+    apiUrl: resolved.apiUrl,
+    apiKey: resolved.apiKey.slice(0, 12) + "...",
+  });
+
+  return resolved;
 }

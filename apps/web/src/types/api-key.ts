@@ -4,3 +4,8 @@ export type ApiKey = {
   isActive: boolean;
   createdAt: string;
 };
+
+export type createdApiKey = {
+  id: string;
+  key: string;
+};

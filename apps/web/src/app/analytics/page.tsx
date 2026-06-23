@@ -6,12 +6,12 @@ import {
   getStatusDistribution,
 } from "@/lib/api";
 import Link from "next/link";
-import { AnalyticsCard } from "@/components/analytics/AnalyticsCard";
 import { AnalyticsTable } from "@/components/analytics/AnalyticsTable";
 import { StatusPieChart } from "@/components/analytics/StatusPieChart";
 import { PassRateChart } from "@/components/analytics/PassRateChart";
 import { FailureChart } from "@/components/analytics/FailureChart";
 import { FailureItem, FlakyTest, SlowTest } from "@/types/analytics";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 
 export default async function AnalyticsPage() {
   const [summary, failures, slowest, flaky, statusDistribution] =
@@ -28,13 +28,13 @@ export default async function AnalyticsPage() {
       <h1 className="text-3xl font-bold">Analytics</h1>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AnalyticsCard title="Total Tests" value={summary.totalTests} />
+        <MetricCard title="Total Tests" value={summary.totalTests} />
 
-        <AnalyticsCard title="Total Runs" value={summary.totalRuns} />
+        <MetricCard title="Total Runs" value={summary.totalRuns} />
 
-        <AnalyticsCard title="Pass Rate" value={`${summary.passRate}%`} />
+        <MetricCard title="Pass Rate" value={`${summary.passRate}%`} />
 
-        <AnalyticsCard title="Failure Rate" value={`${summary.failureRate}%`} />
+        <MetricCard title="Failure Rate" value={`${summary.failureRate}%`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

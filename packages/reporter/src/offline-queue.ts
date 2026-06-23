@@ -1,15 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import { BatchResult } from "./types";
 
 const QUEUE_FILE = path.join(process.cwd(), ".assertive-queue.json");
 
-export interface BatchResult {
-  uniqueId: string;
-  status: string;
-  durationMs: number;
-  errorMessage?: string;
-  traceUrl?: string | null;
-}
 export interface QueueItem {
   batch: {
     branch: string;

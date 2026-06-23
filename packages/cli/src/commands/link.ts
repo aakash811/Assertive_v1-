@@ -2,7 +2,7 @@ import { Command } from "commander";
 import fs from "node:fs";
 import path from "node:path";
 
-import { loadConfig } from "../utils/load-config.js";
+import { loadAssertiveConfig } from "@assertive/shared";
 import { findProjectRoot } from "../utils/find-project-root.js";
 
 export const linkCommand = new Command("link")
@@ -13,7 +13,7 @@ export const linkCommand = new Command("link")
 
     const configPath = path.join(root, ".assertive.json");
 
-    const config = loadConfig();
+    const config = loadAssertiveConfig();
 
     const updatedConfig = {
       ...config,

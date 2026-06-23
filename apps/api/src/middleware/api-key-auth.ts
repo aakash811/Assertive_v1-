@@ -2,6 +2,8 @@ import { createMiddleware } from "hono/factory";
 import { prisma } from "../lib/prisma";
 import { hashAPIKey } from "../lib/hash";
 import type { HonoVariables } from "../types/hono";
+import { AppError } from "../lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
 
 export const apiKeyAuth = createMiddleware<{
   Variables: HonoVariables;
@@ -9,12 +11,7 @@ export const apiKeyAuth = createMiddleware<{
   const authHeader = c.req.header("Authorization");
 
   if (!authHeader?.startsWith("Bearer ")) {
-    return c.json(
-      {
-        error: "Missing API key",
-      },
-      401,
-    );
+    throw new AppError(ERROR_CODES.UNAUTHORIZED, "Missing API key", 401);
   }
 
   const rawKey = authHeader.replace("Bearer ", "");
@@ -24,37 +21,41 @@ export const apiKeyAuth = createMiddleware<{
     where: {
       hashedKey,
     },
+    include: {
+      organization: {
+        include: {
+          projects: true,
+        },
+      },
+    },
   });
 
   if (!apiKey) {
-    return c.json(
-      {
-        error: "Invalid API key",
-      },
-      401,
-    );
+    throw new AppError(ERROR_CODES.INVALID_API_KEY, "Invalid API key", 401);
   }
-
   if (!apiKey.isActive) {
-    return c.json(
-      {
-        error: "API key revoked",
-      },
-      401,
-    );
+    throw new AppError(ERROR_CODES.PERMISSION_DENIED, "API key revoked", 401);
   }
-
   if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-    return c.json(
-      {
-        error: "API key expired",
-      },
-      401,
-    );
+    throw new AppError(ERROR_CODES.API_KEY_EXPIRED, "API key expired", 401);
   }
 
-  c.set("projectId", apiKey.projectId);
+  const override = c.req.header("x-project-id");
+  let project;
+
+  if (override) {
+    project = apiKey.organization.projects.find((p) => p.id === override);
+  } else {
+    project = apiKey.organization.projects[0];
+  }
+
+  if (!project) {
+    throw new AppError(ERROR_CODES.PROJECT_NOT_FOUND, "Project not found", 404);
+  }
+
+  c.set("projectId", project.id);
   c.set("apiKeyId", apiKey.id);
+  c.set("organizationId", apiKey.organizationId);
 
   await next();
 });

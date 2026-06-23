@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { ok } from "../lib/api-response";
 
 import { apiKeyAuth } from "../middleware/api-key-auth";
 
@@ -15,7 +16,7 @@ testSuiteRoutes.use("*", apiKeyAuth);
 testSuiteRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
 
-  return c.json(await testSuiteService.list(projectId));
+  return c.json(ok(await testSuiteService.list(projectId)));
 });
 
 testSuiteRoutes.post("/", async (c) => {
@@ -24,20 +25,24 @@ testSuiteRoutes.post("/", async (c) => {
   const body = await c.req.json();
 
   return c.json(
-    await testSuiteService.create({
-      name: body.name,
-      parentId: body.parentId,
-      projectId,
-    }),
+    ok(
+      await testSuiteService.create({
+        name: body.name,
+        parentId: body.parentId,
+        projectId,
+      }),
+    ),
     201,
   );
 });
 
 testSuiteRoutes.post("/:suiteId/test-cases/:testCaseId", async (c) => {
   return c.json(
-    await testSuiteService.assignTestCase(
-      c.req.param("suiteId"),
-      c.req.param("testCaseId"),
+    ok(
+      await testSuiteService.assignTestCase(
+        c.req.param("suiteId"),
+        c.req.param("testCaseId"),
+      ),
     ),
   );
 });

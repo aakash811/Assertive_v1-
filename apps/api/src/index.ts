@@ -13,7 +13,13 @@ import { projectRoutes } from "./routes/project";
 import { cors } from "hono/cors";
 import { statusRoutes } from "./routes/status";
 import { cleanupRoutes } from "./routes/cleanup";
+import { traceRoutes } from "./routes/traces";
 import { prisma } from "./lib/prisma";
+import { fail } from "./lib/api-response";
+import { AppError } from "./lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
+import { ZodError } from "zod";
+import { projectsRoutes } from "./routes/projects";
 
 const app = new Hono<{ Variables: HonoVariables }>();
 
@@ -26,6 +32,29 @@ app.use(
   }),
 );
 
+app.onError((error, c) => {
+  if (error instanceof AppError) {
+    return c.json(
+      fail(error.code, error.message, error.details),
+      error.status as 400 | 401 | 403 | 404 | 500,
+    );
+  }
+
+  if (error instanceof ZodError) {
+    return c.json(
+      fail(ERROR_CODES.VALIDATION_ERROR, "Validation failed", error.flatten()),
+      400,
+    );
+  }
+
+  console.error(error);
+
+  return c.json(
+    fail(ERROR_CODES.INTERNAL_SERVER_ERROR, "Internal server error"),
+    500,
+  );
+});
+
 app.get("/api/health", (c) => {
   return c.json({
     status: "ok",
@@ -36,6 +65,8 @@ app.get("/api/health", (c) => {
 app.route("/test", testRoutes);
 
 app.route("/api/api-keys", apiKeyRoutes);
+
+app.route("/api/projects", projectsRoutes);
 
 app.route("/api/project", projectRoutes);
 
@@ -48,6 +79,8 @@ app.route("/api/test-suites", testSuiteRoutes);
 app.route("/api/manual-overrides", manualOverrideRoutes);
 
 app.route("/api/sync", syncRoutes);
+
+app.route("/api", traceRoutes);
 
 app.route("/api/status", statusRoutes);
 

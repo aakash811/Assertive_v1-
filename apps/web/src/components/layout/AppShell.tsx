@@ -1,22 +1,20 @@
 import { ReactNode } from "react";
-
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-
 type Props = {
   children: ReactNode;
 };
 
 export function AppShell({ children }: Props) {
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       <Sidebar />
 
       <div className="flex flex-1 flex-col">
         <Header />
 
-        <main className="flex-1 overflow-auto bg-background p-6">
-          {children}
+        <main className="flex-1 overflow-y-auto bg-background p-6">
+          <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
     </div>

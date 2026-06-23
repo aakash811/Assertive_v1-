@@ -5,7 +5,8 @@
     "moduleResolution": "NodeNext",
     "types": ["node"],
     "strict": true,
+    "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "../shared/src/define-config.ts"]
 }
