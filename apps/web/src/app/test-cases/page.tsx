@@ -8,6 +8,9 @@ type Props = {
     status?: string;
     owner?: string;
     tag?: string;
+    type?: string;
+    priority?: string;
+    syncState?: string;
     flaky?: string;
     sort?: string;
   }>;
@@ -22,6 +25,9 @@ export default async function TestCasesPage({ searchParams }: Props) {
     status: params.status,
     owner: params.owner,
     tag: params.tag,
+    type: params.type,
+    priority: params.priority,
+    syncState: params.syncState as "SYNCED" | "STALE" | undefined,
     flaky: params.flaky === "true",
   });
 
@@ -31,6 +37,12 @@ export default async function TestCasesPage({ searchParams }: Props) {
       page={page}
       q={params.q ?? ""}
       status={params.status ?? ""}
+      owner={params.owner ?? ""}
+      tag={params.tag ?? ""}
+      type={params.type ?? ""}
+      priority={params.priority ?? ""}
+      syncState={params.syncState ?? ""}
+      flaky={params.flaky === "true"}
       sort={params.sort ?? "updated"}
       pagination={testCases.pagination}
     />

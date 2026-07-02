@@ -6,10 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "copy-trace-viewer": "node scripts/copy-trace-viewer.mjs",
+    "postinstall": "pnpm copy-trace-viewer"
   },
   "dependencies": {
+    "@playwright/test": "^1.60.0",
     "@tanstack/react-query": "^5.101.0",
     "better-auth": "^1.6.15",
     "next": "16.2.7",

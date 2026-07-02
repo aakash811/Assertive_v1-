@@ -31,7 +31,7 @@ describe("apiKeyService", () => {
     expect(apiKeyRepository.create).toHaveBeenCalledTimes(1);
     expect(apiKeyRepository.create).toHaveBeenCalledWith({
       name: "local-dev",
-      projectId: "project-1",
+      organizationId: "project-1",
       hashedKey: expect.any(String),
     });
   });

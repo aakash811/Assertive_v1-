@@ -17,6 +17,7 @@ export default async function RunBatchPage({ params }: Props) {
       ? 0
       : Math.round((batch.passedCount / batch.totalCount) * 100);
 
+  const traceCount = (batch.runs ?? []).filter((run) => run.traceUrl).length;
   return (
     <div className="space-y-6">
       <div className="rounded-lg border p-4">
@@ -78,6 +79,13 @@ export default async function RunBatchPage({ params }: Props) {
         </div>
       </div>
 
+      <div className="rounded-lg border p-4">
+        <div className="text-sm text-gray-500">Traces Available</div>
+
+        <div className="mt-2 text-2xl font-bold">
+          {traceCount} / {batch.runs?.length ?? 0}
+        </div>
+      </div>
       <RunResultsTable items={batch.runs ?? []} />
     </div>
   );

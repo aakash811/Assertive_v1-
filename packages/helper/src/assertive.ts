@@ -40,4 +40,10 @@ export const assertive = {
   field(testName: string, key: string, value: string) {
     getOrCreate(testName).fields[key] = value;
   },
+
+  attach(testName: string, key: string, value: unknown) {
+    const metadata = getOrCreate(testName);
+    metadata.attachments ??= {};
+    metadata.attachments[key] = value;
+  },
 };

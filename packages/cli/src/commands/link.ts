@@ -10,10 +10,8 @@ export const linkCommand = new Command("link")
   .argument("<projectId>")
   .action((projectId) => {
     const root = findProjectRoot();
-
+    const config = loadAssertiveConfig(root);
     const configPath = path.join(root, ".assertive.json");
-
-    const config = loadAssertiveConfig();
 
     const updatedConfig = {
       ...config,

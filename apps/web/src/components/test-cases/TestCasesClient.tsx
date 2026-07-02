@@ -12,6 +12,12 @@ type Props = {
   page: number;
   q: string;
   status: string;
+  owner: string;
+  tag: string;
+  type: string;
+  priority: string;
+  syncState: string;
+  flaky: boolean;
   sort: string;
   pagination: {
     page: number;
@@ -25,6 +31,12 @@ export function TestCasesClient({
   page,
   q,
   status,
+  owner,
+  tag,
+  type,
+  priority,
+  syncState,
+  flaky,
   sort,
   pagination,
 }: Props) {
@@ -58,8 +70,20 @@ export function TestCasesClient({
       <TestCasesToolbar
         search={q}
         status={status}
+        owner={owner}
+        tag={tag}
+        type={type}
+        priority={priority}
+        syncState={syncState}
+        flaky={flaky}
         onSearch={(value) => updateParam("q", value)}
         onStatus={(value) => updateParam("status", value)}
+        onOwner={(value) => updateParam("owner", value)}
+        onTag={(value) => updateParam("tag", value)}
+        onType={(value) => updateParam("type", value)}
+        onPriority={(value) => updateParam("priority", value)}
+        onSyncState={(value) => updateParam("syncState", value)}
+        onFlaky={(value) => updateParam("flaky", value ? "true" : "")}
       />
 
       <TestCasesSort

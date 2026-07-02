@@ -1,7 +1,10 @@
 import { loadAssertiveConfig } from "@assertive/shared";
+import { findProjectRoot } from "../utils/find-project-root";
 
 function validateConfig() {
-  const config = loadAssertiveConfig();
+  const root = findProjectRoot();
+
+  const config = loadAssertiveConfig(root);
 
   if (!config.apiUrl) {
     throw new Error("apiUrl is missing");
@@ -14,41 +17,42 @@ function validateConfig() {
   return config;
 }
 
-export async function apiPost(path: string, body?: unknown) {
+async function request(path: string, init?: RequestInit) {
   const config = validateConfig();
 
   const response = await fetch(`${config.apiUrl}${path}`, {
-    method: "POST",
+    ...init,
     headers: {
+      ...(init?.headers ?? {}),
       Authorization: `Bearer ${config.apiKey}`,
-      "Content-Type": "application/json",
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+
+  const json = await response.json();
 
   if (!response.ok) {
     throw new Error(
-      `Request failed: ${response.status} ${response.statusText}`,
+      json.success
+        ? response.statusText
+        : (json.error?.message ?? response.statusText),
     );
   }
 
-  return response.json();
+  return json.data;
 }
 
-export async function apiGet(path: string) {
-  const config = validateConfig();
+export function apiGet(path: string) {
+  return request(path);
+}
 
-  const response = await fetch(`${config.apiUrl}${path}`, {
+export function apiPost(path: string, body?: unknown) {
+  return request(path, {
+    method: "POST",
+
     headers: {
-      Authorization: `Bearer ${config.apiKey}`,
+      "Content-Type": "application/json",
     },
+
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
-
-  if (!response.ok) {
-    throw new Error(
-      `Request failed: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  return response.json();
 }

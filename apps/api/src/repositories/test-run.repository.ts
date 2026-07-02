@@ -8,16 +8,25 @@ export const testRunRepository = {
     });
   },
 
-  async findMany(projectId: string, page: number, limit: number) {
+  async findMany(
+    projectId: string,
+    page: number,
+    limit: number,
+    testCaseId?: string,
+  ) {
     const skip = (page - 1) * limit;
+    const where: Prisma.TestRunWhereInput = {
+      testCase: {
+        projectId,
+      },
+    };
+
+    if (testCaseId) {
+      where.testCaseId = testCaseId;
+    }
     const [items, total] = await Promise.all([
       prisma.testRun.findMany({
-        where: {
-          testCase: {
-            projectId,
-          },
-        },
-
+        where,
         include: {
           testCase: true,
         },
@@ -30,11 +39,7 @@ export const testRunRepository = {
       }),
 
       prisma.testRun.count({
-        where: {
-          testCase: {
-            projectId,
-          },
-        },
+        where,
       }),
     ]);
 

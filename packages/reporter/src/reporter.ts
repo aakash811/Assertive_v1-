@@ -1,3 +1,4 @@
+import os from "node:os";
 import { AssertiveClient } from "./client";
 import { BatchResult } from "./types";
 import { resolveConfig, type ReporterConfig } from "./config";
@@ -12,7 +13,7 @@ import {
   TestResult,
 } from "@playwright/test/reporter";
 
-import { metadataStore } from "@assertive/helper";
+import { flush } from "@assertive/helper";
 import fs from "node:fs";
 
 export class AssertiveReporter implements Reporter {
@@ -25,6 +26,25 @@ export class AssertiveReporter implements Reporter {
   constructor(config: Partial<ReporterConfig> = {}) {
     this.config = resolveConfig(config);
     this.client = new AssertiveClient(this.config);
+  }
+
+  private async retry<T>(operation: () => Promise<T>): Promise<T> {
+    let delay = 1000;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        if (attempt === 3) {
+          throw error;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        delay *= 2;
+      }
+    }
+
+    throw new Error("Retry failed");
   }
 
   async onBegin(_config: FullConfig, _suite: Suite) {
@@ -51,13 +71,16 @@ export class AssertiveReporter implements Reporter {
 
     try {
       const ciContext = getCIContext();
-      const batch = await this.client.createRunBatch({
-        branch: ciContext.branch,
-        commitSha: ciContext.commitSha,
-        ciBuildId: ciContext.ciBuildId,
-        ciBuildUrl: ciContext.ciBuildUrl,
-        environment: ciContext.environment,
-      });
+      const batch = await this.retry(() =>
+        this.client.createRunBatch({
+          branch: ciContext.branch,
+          commitSha: ciContext.commitSha,
+          ciBuildId: ciContext.ciBuildId,
+          ciBuildUrl: ciContext.ciBuildUrl,
+          environment: ciContext.environment,
+          triggeredBy: ciContext.triggeredBy,
+        }),
+      );
 
       this.runBatchId = batch.id;
 
@@ -77,7 +100,7 @@ export class AssertiveReporter implements Reporter {
       return;
     }
 
-    const metadata = metadataStore.get(test.title);
+    const metadata = flush(test.title);
 
     const traceAttachment = result.attachments.find((attachment) =>
       attachment.path?.endsWith("trace.zip"),
@@ -85,14 +108,15 @@ export class AssertiveReporter implements Reporter {
 
     const runResult: BatchResult = {
       uniqueId: test.title,
-
       status: result.status.toUpperCase(),
-
       durationMs: result.duration,
-
       errorMessage: result.error?.message,
-
+      errorStack: result.error?.stack,
       traceUrl: traceAttachment?.path ?? null,
+      browser: test.parent.project()?.name,
+      os: os.platform(),
+      retryOf: result.retry > 0 ? result.retry - 1 : undefined,
+      attemptNumber: result.retry + 1,
     };
 
     if (traceAttachment?.path) {
@@ -152,7 +176,9 @@ export class AssertiveReporter implements Reporter {
     }
 
     try {
-      await this.client.uploadBatch(this.runBatchId, this.results);
+      await this.retry(() =>
+        this.client.uploadBatch(this.runBatchId!, this.results),
+      );
 
       console.log(`[Assertive] Uploaded ${this.results.length} results`);
     } catch {

@@ -46,3 +46,26 @@ testSuiteRoutes.post("/:suiteId/test-cases/:testCaseId", async (c) => {
     ),
   );
 });
+
+testSuiteRoutes.patch("/:id", async (c) => {
+  const body = await c.req.json();
+
+  return c.json(
+    ok(
+      await testSuiteService.update(c.req.param("id"), {
+        name: body.name,
+        parentId: body.parentId,
+      }),
+    ),
+  );
+});
+
+testSuiteRoutes.delete("/:id", async (c) => {
+  await testSuiteService.delete(c.req.param("id"));
+
+  return c.json(
+    ok({
+      success: true,
+    }),
+  );
+});

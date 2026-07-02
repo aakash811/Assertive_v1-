@@ -9,7 +9,7 @@ export function loadAssertiveConfig(root = process.cwd()): AssertiveConfig {
   const configPath = path.join(root, ".assertive.json");
 
   if (!fs.existsSync(configPath)) {
-    throw new Error("Missing .assertive.json");
+    throw new Error(`Missing .assertive.json at ${configPath}`);
   }
 
   const raw = JSON.parse(fs.readFileSync(configPath, "utf8"));

@@ -1,6 +1,5 @@
-import { TestStatus } from "@prisma/client";
+import { Prisma, TestStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
-import { historyService } from "./history.service";
 
 export const manualOverrideService = {
   async overrideStatus(
@@ -20,11 +19,11 @@ export const manualOverrideService = {
       }
 
       const previousStatus = existing.lastStatus;
+
       const testCase = await tx.testCase.update({
         where: {
           id: testCaseId,
         },
-
         data: {
           lastStatus: status,
           isManualOverride: true,
@@ -32,19 +31,74 @@ export const manualOverrideService = {
         },
       });
 
-      await historyService.create({
-        testCaseId,
-        action: "MANUAL_OVERRIDE",
-        comment,
-        changes: {
-          status: {
-            from: previousStatus,
-            to: status,
+      const runBatch = await tx.runBatch.create({
+        data: {
+          projectId: existing.projectId,
+          triggeredBy: "manual",
+          environment: "manual",
+        },
+      });
+
+      await tx.testRun.create({
+        data: {
+          testCaseId,
+          runBatchId: runBatch.id,
+          status,
+          isManualOverride: true,
+        },
+      });
+
+      const batchUpdate: Prisma.RunBatchUpdateInput = {
+        totalCount: {
+          increment: 1,
+        },
+      };
+
+      switch (status) {
+        case "PASSED":
+          batchUpdate.passedCount = {
+            increment: 1,
+          };
+          break;
+
+        case "FAILED":
+          batchUpdate.failedCount = {
+            increment: 1,
+          };
+          break;
+
+        case "SKIPPED":
+          batchUpdate.skippedCount = {
+            increment: 1,
+          };
+          break;
+      }
+
+      await tx.runBatch.update({
+        where: {
+          id: runBatch.id,
+        },
+        data: batchUpdate,
+      });
+
+      await tx.testCaseHistory.create({
+        data: {
+          testCaseId,
+          action: "STATUS_OVERRIDE",
+          comment,
+          changes: {
+            status: {
+              from: previousStatus,
+              to: status,
+            },
           },
         },
       });
 
-      return { success: true, testCase };
+      return {
+        success: true,
+        testCase,
+      };
     });
   },
 };

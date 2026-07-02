@@ -2,10 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { findProjectRoot } from "./find-project-root.js";
+import { SyncTestCase } from "@assertive/shared";
 
 const CACHE_DIR = ".assertive";
 const CACHE_FILE = "sync-cache.json";
-type Cache = Record<string, string>;
+type Cache = Record<
+  string,
+  {
+    hash: string;
+    tests: SyncTestCase[];
+  }
+>;
 
 function getCachePath() {
   return path.join(findProjectRoot(), CACHE_DIR, CACHE_FILE);

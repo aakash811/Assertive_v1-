@@ -2,6 +2,7 @@ import type {
   AnalyticsSummary,
   FailureItem,
   FlakyTest,
+  RecentFailure,
   SlowTest,
   StatusDistibution,
 } from "@/types/analytics";
@@ -133,6 +134,10 @@ export function getTestCases(params?: {
   owner?: string;
   tag?: string;
   flaky?: boolean;
+  syncState?: "SYNCED" | "STALE";
+  suite?: string;
+  type?: string;
+  priority?: string;
 }): Promise<PaginatedData<TestCase>> {
   const search = new URLSearchParams();
 
@@ -162,6 +167,22 @@ export function getTestCases(params?: {
 
   if (params?.flaky) {
     search.set("flaky", "true");
+  }
+
+  if (params?.syncState) {
+    search.set("syncState", params.syncState);
+  }
+
+  if (params?.suite) {
+    search.set("suite", params.suite);
+  }
+
+  if (params?.type) {
+    search.set("type", params.type);
+  }
+
+  if (params?.priority) {
+    search.set("priority", params.priority);
   }
 
   return paginatedRequest<TestCase>(`/test-cases?${search.toString()}`, {
@@ -286,6 +307,14 @@ export function getStatusDistribution(): Promise<StatusDistibution[]> {
   });
 }
 
+export function getRecentFailures(): Promise<RecentFailure[]> {
+  return request<RecentFailure[]>("/analytics/recent-failures", {
+    headers: authHeaders(),
+
+    cache: "no-store",
+  });
+}
+
 //
 // Manual Override
 //
@@ -295,13 +324,12 @@ export function overrideTestCaseStatus(
   status: "PASSED" | "FAILED" | "SKIPPED",
   comment: string,
 ): Promise<void> {
-  return request<void>(`/manual-overrides/test-cases/${id}/status`, {
-    method: "POST",
+  return request<void>(`/test-cases/${id}/override`, {
+    method: "PATCH",
     headers: {
       ...authHeaders(),
       "Content-Type": "application/json",
     },
-
     body: JSON.stringify({
       status,
       comment,

@@ -36,3 +36,9 @@ analyticsRoutes.get("/status-distribution", async (c) => {
 
   return c.json(ok(result));
 });
+
+analyticsRoutes.get("/recent-failures", async (c) => {
+  const result = await analyticsService.getRecentFailures(c.get("projectId"));
+
+  return c.json(ok(result));
+});

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { overrideTestCaseStatus } from "@/lib/api";
 
 type Props = {
@@ -8,8 +9,9 @@ type Props = {
 };
 
 export function OverrideStatusModal({ testCaseId }: Props) {
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
 
+  const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("PASSED");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,9 @@ export function OverrideStatusModal({ testCaseId }: Props) {
 
       alert("Status updated");
 
-      window.location.reload();
+      setOpen(false);
+
+      router.refresh();
     } catch {
       alert("Failed");
     } finally {

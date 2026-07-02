@@ -43,9 +43,12 @@ traceRoutes.get("/traces/:traceKey", async (c) => {
     const trace = await readTrace(traceKey);
 
     return new Response(trace, {
+      status: 200,
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${traceKey}.zip"`,
+        "Content-Length": String(trace.length),
+        "Cache-Control": "no-cache",
+        "Access-Control-Allow-Origin": "*",
       },
     });
   } catch {

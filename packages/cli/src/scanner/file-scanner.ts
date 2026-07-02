@@ -5,7 +5,7 @@ import { loadAssertiveConfig } from "@assertive/shared";
 
 export async function scanFiles() {
   const root = findProjectRoot();
-  const config = loadAssertiveConfig();
+  const config = loadAssertiveConfig(root);
 
   const patterns = config.include ?? ["**/*.spec.ts", "**/*.test.ts"];
 

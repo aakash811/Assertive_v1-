@@ -29,3 +29,11 @@ export type FlakyTest = {
   title: string;
   flakyScore: number;
 };
+
+export type RecentFailure = {
+  id: string;
+  title: string;
+  createdAt: string;
+  runBatchId: string;
+  branch?: string | null;
+};

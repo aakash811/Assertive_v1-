@@ -4,6 +4,7 @@ export interface CIContext {
   ciBuildId?: string;
   ciBuildUrl?: string;
   environment: string;
+  triggeredBy?: string;
 }
 
 export function getCIContext(): CIContext {
@@ -23,5 +24,11 @@ export function getCIContext(): CIContext {
         : undefined,
 
     environment: process.env.NODE_ENV || "development",
+
+    triggeredBy:
+      process.env.GITHUB_ACTOR ||
+      process.env.GITLAB_USER_NAME ||
+      process.env.BUILD_USER ||
+      "local",
   };
 }

@@ -2,10 +2,5 @@
   "apiUrl": "http://localhost:4321",
   "apiKey": "ask_live_b47c6e2295cbb82f6f769fd9ab36076f67c870f07be0022e",
   "framework": "playwright",
-  "projectId": "6f74a359-5b65-489d-a017-230ac1e6dad4",
-  "include": ["packages/playground/tests/**/*.spec.ts"],
-  "ignore": ["**/node_modules/**", "**/dist/**"],
-  "sync": {
-    "staleDays": 30
-  }
+  "projectId": "df88cfb1-e4c2-4e9a-bc4c-e8c27bf03d5c"
 }

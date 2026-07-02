@@ -13,23 +13,35 @@ import {
   getStatusDistribution,
   getMetricsSummary,
   getRunBatches,
+  getRecentFailures,
 } from "@/lib/api";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { RunBatchesTable } from "@/components/run-batches/RunBatchesTable";
+import { HealthCard } from "@/components/dashboard/HealthCard";
+import { RecentFailures } from "@/components/dashboard/RecentFailures";
+import { TrendCard } from "@/components/dashboard/TrendCard";
 
 export default async function DashboardPage() {
-  const [metrics, failures, slowest, flaky, status, runBatches] =
-    await Promise.all([
-      getMetricsSummary(),
-      getMostFailingTests(),
-      getSlowestTests(),
-      getFlakyTests(),
-      getStatusDistribution(),
-      getRunBatches({
-        page: 1,
-        limit: 5,
-      }),
-    ]);
+  const [
+    metrics,
+    failures,
+    slowest,
+    flaky,
+    status,
+    runBatches,
+    recentFailures,
+  ] = await Promise.all([
+    getMetricsSummary(),
+    getMostFailingTests(),
+    getSlowestTests(),
+    getFlakyTests(),
+    getStatusDistribution(),
+    getRunBatches({
+      page: 1,
+      limit: 5,
+    }),
+    getRecentFailures(),
+  ]);
   if (metrics.totalTests === 0) {
     return (
       <div className="space-y-8">
@@ -56,6 +68,7 @@ export default async function DashboardPage() {
         <MetricCard title="Flaky Tests" value={metrics.flakyTests} />
 
         <MetricCard title="Pass Rate" value={`${metrics.passRate}%`} />
+        <HealthCard passRate={metrics.passRate} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <PassRateChart passRate={metrics.passRate} />
@@ -96,6 +109,7 @@ export default async function DashboardPage() {
           }))}
         />
       </div>
+      <RecentFailures items={recentFailures} />
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Recent Run Batches</h2>
         <RunBatchesTable items={runBatches.items} />

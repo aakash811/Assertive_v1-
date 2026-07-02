@@ -4,6 +4,7 @@ export interface RunBatchPayload {
   commitSha?: string;
   ciBuildId?: string;
   ciBuildUrl?: string;
+  triggeredBy?: string;
 }
 
 export interface TestRunPayload {
@@ -25,7 +26,12 @@ export interface BatchResult {
   status: string;
   durationMs?: number;
   errorMessage?: string;
+  errorStack?: string;
   traceUrl?: string | null;
+  browser?: string;
+  os?: string;
+  retryOf?: number;
+  attemptNumber?: number;
 }
 
 export interface TraceUploadResponse {

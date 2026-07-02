@@ -31,10 +31,5 @@ export function resolveConfig(
     retries: config.retries ?? defaultConfig.retries,
   };
 
-  console.log("[Assertive Reporter]", {
-    apiUrl: resolved.apiUrl,
-    apiKey: resolved.apiKey.slice(0, 12) + "...",
-  });
-
   return resolved;
 }

@@ -2,12 +2,23 @@
   "name": "@assertive/cli",
   "version": "1.0.0",
   "private": true,
-  "bin": {
-    "assertive": "./dist/index.js"
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "src/index.ts"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.60.0"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
+    "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },

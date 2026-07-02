@@ -1,18 +1,25 @@
 import { testCaseRepository } from "../repositories/test-case.repository";
 import type { TestStatus } from "@prisma/client";
+import { generateUniqueId } from "../lib/generate-unique-id";
 
 export const testCaseService = {
-  create(
+  async create(
     projectId: string,
     data: {
-      uniqueId: string;
       title: string;
       description?: string;
+      owner?: string;
+      priority?: string;
+      testType?: string;
+      suiteId?: string;
     },
   ) {
+    const uniqueId = await generateUniqueId(projectId);
+
     return testCaseRepository.create({
       ...data,
       projectId,
+      uniqueId,
     });
   },
 
@@ -26,6 +33,9 @@ export const testCaseService = {
       owner?: string;
       tag?: string;
       flaky?: boolean;
+      suite?: string;
+      syncState?: "SYNCED" | "STALE";
+      testType?: string;
     },
   ) {
     return testCaseRepository.findMany(projectId, filters);

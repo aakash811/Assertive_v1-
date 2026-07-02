@@ -37,4 +37,12 @@ export const tagRepository = {
       },
     });
   },
+
+  delete(id: string) {
+    return prisma.tag.delete({
+      where: {
+        id,
+      },
+    });
+  },
 };

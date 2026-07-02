@@ -38,6 +38,7 @@ export type TestRun = {
   durationMs?: number | null;
   errorMessage?: string | null;
   traceUrl?: string | null;
+  traceKey?: string | null;
   testCaseId: string;
   runBatchId: string;
   createdAt: string;

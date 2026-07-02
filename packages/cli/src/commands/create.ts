@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import fs from "node:fs";
 import path from "node:path";
+import { apiPost } from "../lib/api.js";
 import { loadAssertiveConfig } from "@assertive/shared";
 import { findProjectRoot } from "../utils/find-project-root.js";
 
@@ -18,15 +19,22 @@ export const createCommand = new Command("create")
   .option("--type <type>")
   .option("--priority <priority>")
   .description("Create a new Playwright test scaffold")
-  .action((title, options) => {
-    const config = loadAssertiveConfig();
+  .action(async (title, options) => {
     const root = findProjectRoot();
+    const config = loadAssertiveConfig(root);
     const testsDir = path.join(root, "tests");
+
+    const created = await apiPost("/api/test-cases", {
+      title,
+      description: "",
+      priority: options.priority,
+      testType: options.type,
+    });
+
     fs.mkdirSync(testsDir, { recursive: true });
 
     const fileName = `${toSlug(title) || "new-test"}.spec.ts`;
     const filePath = path.join(testsDir, fileName);
-    const uniqueId = `${config.projectId ?? "TST"}-${Date.now().toString().slice(-4)}`;
 
     if (fs.existsSync(filePath)) {
       console.error(`${fileName} already exists`);
@@ -40,7 +48,7 @@ export const createCommand = new Command("create")
       'import { assertive } from "@assertive/helper";',
       "",
       `test(${JSON.stringify(title)}, async () => {`,
-      `  assertive.id(${JSON.stringify(title)}, ${JSON.stringify(uniqueId)});`,
+      `  assertive.id(${JSON.stringify(title)}, ${JSON.stringify(created.uniqueId)});`,
     ];
 
     if (options.suite) {

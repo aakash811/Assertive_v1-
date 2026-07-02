@@ -34,4 +34,8 @@ export const analyticsService = {
   getStatusDistribution(projectId: string) {
     return analyticsRepository.getStatusDistribution(projectId);
   },
+
+  getRecentFailures(projectId: string) {
+    return analyticsRepository.getRecentFailures(projectId);
+  },
 };

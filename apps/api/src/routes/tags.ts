@@ -42,3 +42,13 @@ tagRoutes.delete("/:tagId/test-cases/:testCaseId", async (c) => {
 
   return c.json(ok({ success: true }));
 });
+
+tagRoutes.delete("/:id", async (c) => {
+  await tagService.delete(c.req.param("id"));
+
+  return c.json(
+    ok({
+      success: true,
+    }),
+  );
+});

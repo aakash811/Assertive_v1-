@@ -1,7 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const TRACE_DIRECTORY = path.resolve(process.cwd(), "..", "..", "storage", "traces");
+const TRACE_DIRECTORY = path.resolve(
+  process.cwd(),
+  "..",
+  "..",
+  "storage",
+  "traces",
+);
 
 function getTraceFilePath(traceKey: string) {
   return path.join(TRACE_DIRECTORY, `${traceKey}.zip`);
@@ -17,5 +23,6 @@ export async function readTrace(traceKey: string) {
 }
 
 export function getTraceUrl(traceKey: string) {
-  return `/api/traces/${traceKey}`;
+  const apiUrl = process.env.APP_URL ?? "http://localhost:4321";
+  return `${apiUrl}/api/traces/${traceKey}`;
 }

@@ -5,6 +5,7 @@ import type {
   TestRunPayload,
   TraceUploadResponse,
 } from "./types";
+
 import { ReporterConfig } from "./config";
 
 type RunBatchResponse = {
@@ -35,11 +36,13 @@ type ApiError = {
 };
 
 type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
 export class AssertiveClient {
   constructor(private config: ReporterConfig) {}
 
   private async request<T>(url: string, init?: RequestInit): Promise<T> {
     const response = await fetch(url, init);
+
     const json = (await response.json()) as ApiResponse<T>;
 
     if (!response.ok) {
@@ -56,6 +59,7 @@ export class AssertiveClient {
   private headers() {
     return {
       Authorization: `Bearer ${this.config.apiKey}`,
+
       "Content-Type": "application/json",
     };
   }
@@ -65,7 +69,9 @@ export class AssertiveClient {
       `${this.config.apiUrl}/api/run-batches`,
       {
         method: "POST",
+
         headers: this.headers(),
+
         body: JSON.stringify(payload),
       },
     );
@@ -74,7 +80,9 @@ export class AssertiveClient {
   async createTestRun(payload: TestRunPayload) {
     return this.request<EmptyResponse>(`${this.config.apiUrl}/api/test-runs`, {
       method: "POST",
+
       headers: this.headers(),
+
       body: JSON.stringify(payload),
     });
   }
@@ -101,10 +109,14 @@ export class AssertiveClient {
       `${this.config.apiUrl}/api/test-cases/discover`,
       {
         method: "POST",
+
         headers: this.headers(),
+
         body: JSON.stringify({
           uniqueId,
+
           title,
+
           metadata,
         }),
       },
@@ -116,7 +128,9 @@ export class AssertiveClient {
       `${this.config.apiUrl}/api/run-batches/${runBatchId}/upload`,
       {
         method: "POST",
+
         headers: this.headers(),
+
         body: JSON.stringify({
           results,
         }),
@@ -136,6 +150,7 @@ export class AssertiveClient {
   async uploadTrace(uploadUrl: string, trace: Buffer) {
     const response = await fetch(uploadUrl, {
       method: "PUT",
+
       body: new Uint8Array(trace),
     });
 

@@ -14,4 +14,7 @@ export const tagService = {
   remove(testCaseId: string, tagId: string) {
     return tagRepository.remove(testCaseId, tagId);
   },
+  delete(id: string) {
+    return tagRepository.delete(id);
+  },
 };

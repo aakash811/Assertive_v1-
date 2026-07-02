@@ -11,6 +11,7 @@ import {
   updateTestCaseSchema,
 } from "../validators/test-case.validator";
 import { TestStatus } from "@prisma/client";
+import { SyncState } from "@prisma/client";
 
 export const testCaseRoutes = new Hono<{
   Variables: HonoVariables;
@@ -19,7 +20,6 @@ export const testCaseRoutes = new Hono<{
 testCaseRoutes.post("/", async (c) => {
   const body = createTestCaseSchema.parse(await c.req.json());
   const projectId = c.get("projectId");
-
   const testCase = await testCaseService.create(projectId, body);
 
   return c.json(ok(testCase), 201);
@@ -35,9 +35,17 @@ testCaseRoutes.get("/", async (c) => {
     rawStatus && Object.values(TestStatus).includes(rawStatus as TestStatus)
       ? (rawStatus as TestStatus)
       : undefined;
+
+  const rawSyncState = c.req.query("syncState");
+  const syncState =
+    rawSyncState && Object.values(SyncState).includes(rawSyncState as SyncState)
+      ? (rawSyncState as SyncState)
+      : undefined;
   const owner = c.req.query("owner");
   const tag = c.req.query("tag");
   const flaky = c.req.query("flaky");
+  const suite = c.req.query("suite");
+  const testType = c.req.query("testType");
 
   const testCases = await testCaseService.list(projectId, {
     page,
@@ -47,6 +55,9 @@ testCaseRoutes.get("/", async (c) => {
     owner,
     tag,
     flaky: flaky === undefined ? undefined : flaky === "true",
+    suite,
+    syncState,
+    testType,
   });
 
   return c.json(

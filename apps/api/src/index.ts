@@ -26,7 +26,7 @@ const app = new Hono<{ Variables: HonoVariables }>();
 app.use(
   "*",
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://trace.playwright.dev"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   }),

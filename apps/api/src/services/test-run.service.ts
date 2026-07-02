@@ -78,8 +78,8 @@ export const testRunService = {
     return run;
   },
 
-  list(projectId: string, page: number, limit: number) {
-    return testRunRepository.findMany(projectId, page, limit);
+  list(projectId: string, page: number, limit: number, testCaseId?: string) {
+    return testRunRepository.findMany(projectId, page, limit, testCaseId);
   },
 
   get(id: string, projectId: string) {

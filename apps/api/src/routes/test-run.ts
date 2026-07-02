@@ -19,10 +19,11 @@ testRunRoutes.post("/", async (c) => {
 
 testRunRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
+  const testCaseId = c.req.query("testCaseId");
   const page = Number(c.req.query("page")) || 1;
   const limit = Number(c.req.query("limit")) || 20;
 
-  const result = await testRunService.list(projectId, page, limit);
+  const result = await testRunService.list(projectId, page, limit, testCaseId);
 
   return c.json(
     paginated(result.items, {

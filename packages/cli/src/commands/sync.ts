@@ -7,6 +7,8 @@ import type { SyncTestCase } from "@assertive/shared";
 import { apiPost } from "../lib/api.js";
 import { getChangedFiles } from "../utils/get-changed-files.js";
 import { loadAssertiveConfig } from "@assertive/shared";
+import { findProjectRoot } from "../utils/find-project-root.js";
+import { readCache, writeCache, hashFile } from "../utils/sync-cache.js";
 
 export const syncCommand = new Command("sync")
   .description("Sync tests with Assertive")
@@ -14,7 +16,8 @@ export const syncCommand = new Command("sync")
   .option("--debug", "Show sync payload")
   .action(async (options) => {
     try {
-      const config = loadAssertiveConfig();
+      const root = findProjectRoot();
+      const config = loadAssertiveConfig(root);
 
       if (!config.projectId) {
         throw new Error(
@@ -37,11 +40,27 @@ export const syncCommand = new Command("sync")
       console.log(`Files changed: ${changedFiles.length}`);
 
       const testCases: SyncTestCase[] = [];
+      const cache = readCache();
 
       for (const file of files) {
-        const parsed = await parseTestFile(file.absolutePath);
-        testCases.push(...parsed);
+        const isChanged = changedFiles.includes(file.absolutePath);
+
+        if (isChanged) {
+          const parsed = await parseTestFile(file.absolutePath);
+
+          testCases.push(...parsed);
+
+          cache[file.absolutePath] = {
+            hash: hashFile(file.absolutePath),
+
+            tests: parsed,
+          };
+        } else {
+          testCases.push(...(cache[file.absolutePath]?.tests ?? []));
+        }
       }
+
+      writeCache(cache);
 
       const duplicates = findDuplicates(testCases);
 

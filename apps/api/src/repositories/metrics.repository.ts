@@ -9,6 +9,9 @@ export const metricsRepository = {
       failedRuns,
       staleRuns,
       flakyTests,
+      testTypeBreakdown,
+      priorityBreakdown,
+      recentBatches,
     ] = await Promise.all([
       prisma.testCase.count({
         where: {
@@ -52,6 +55,37 @@ export const metricsRepository = {
           isFlaky: true,
         },
       }),
+      prisma.testCase.groupBy({
+        by: ["testType"],
+        where: {
+          projectId,
+        },
+        _count: true,
+      }),
+      prisma.testCase.groupBy({
+        by: ["priority"],
+        where: {
+          projectId,
+        },
+        _count: true,
+      }),
+      prisma.runBatch.findMany({
+        where: {
+          projectId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+        select: {
+          id: true,
+          createdAt: true,
+          totalCount: true,
+          passedCount: true,
+          failedCount: true,
+          skippedCount: true,
+        },
+      }),
     ]);
 
     return {
@@ -61,6 +95,9 @@ export const metricsRepository = {
       failedRuns,
       staleRuns,
       flakyTests,
+      testTypeBreakdown,
+      priorityBreakdown,
+      recentBatches,
     };
   },
 };

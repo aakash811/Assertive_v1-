@@ -188,4 +188,44 @@ export const analyticsRepository = {
       value,
     }));
   },
+
+  async getRecentFailures(projectId: string) {
+    const runs = await prisma.testRun.findMany({
+      where: {
+        status: "FAILED",
+        testCase: {
+          projectId,
+        },
+      },
+
+      include: {
+        testCase: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+
+        runBatch: {
+          select: {
+            id: true,
+            branch: true,
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 10,
+    });
+
+    return runs.map((run) => ({
+      id: run.id,
+      title: run.testCase.title,
+      createdAt: run.createdAt,
+      runBatchId: run.runBatchId,
+      branch: run.runBatch?.branch,
+    }));
+  },
 };

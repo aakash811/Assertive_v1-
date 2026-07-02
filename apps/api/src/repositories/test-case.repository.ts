@@ -23,10 +23,23 @@ export const testCaseRepository = {
       owner?: string;
       tag?: string;
       flaky?: boolean;
+      suite?: string;
+      syncState?: "SYNCED" | "STALE";
+      testType?: string;
     },
   ) {
-    const { page, limit, q, status, owner, tag, flaky } = filters;
-
+    const {
+      page,
+      limit,
+      q,
+      status,
+      owner,
+      tag,
+      flaky,
+      suite,
+      syncState,
+      testType,
+    } = filters;
     const skip = (page - 1) * limit;
 
     const where: Prisma.TestCaseWhereInput = {
@@ -77,6 +90,26 @@ export const testCaseRepository = {
 
     if (flaky !== undefined) {
       where.isFlaky = flaky;
+    }
+
+    if (suite) {
+      where.suite = {
+        name: {
+          equals: suite,
+          mode: "insensitive",
+        },
+      };
+    }
+
+    if (syncState) {
+      where.syncState = syncState;
+    }
+
+    if (testType) {
+      where.testType = {
+        equals: testType,
+        mode: "insensitive",
+      };
     }
 
     const [items, total] = await Promise.all([

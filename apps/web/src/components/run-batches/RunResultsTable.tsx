@@ -54,8 +54,9 @@ export function RunResultsTable({ items }: Props) {
                     href={run.traceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    className=" rounded border px-3 py-1 text-sm text-blue-600 hover:bg-blue-50"
                   >
-                    Trace
+                    Open Trace
                   </a>
                 ) : (
                   "-"

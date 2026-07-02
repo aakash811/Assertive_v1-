@@ -28,4 +28,21 @@ export const testSuiteRepository = {
       },
     });
   },
+
+  update(id: string, data: { name?: string; parentId?: string | null }) {
+    return prisma.testSuite.update({
+      where: {
+        id,
+      },
+      data,
+    });
+  },
+
+  delete(id: string) {
+    return prisma.testSuite.delete({
+      where: {
+        id,
+      },
+    });
+  },
 };
