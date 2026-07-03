@@ -100,29 +100,6 @@ export class AssertiveClient {
     }
   }
 
-  async discoverTestCase(
-    externalId: string,
-    title: string,
-    metadata?: TestMetadata,
-  ) {
-    return this.request<TestCaseResponse>(
-      `${this.config.apiUrl}/api/test-cases/discover`,
-      {
-        method: "POST",
-
-        headers: this.headers(),
-
-        body: JSON.stringify({
-          externalId,
-
-          title,
-
-          metadata,
-        }),
-      },
-    );
-  }
-
   async uploadBatch(runBatchId: string, results: BatchResult[]) {
     return this.request<EmptyResponse>(
       `${this.config.apiUrl}/api/run-batches/${runBatchId}/upload`,

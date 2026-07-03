@@ -12,8 +12,6 @@ import {
   TestCase,
   TestResult,
 } from "@playwright/test/reporter";
-
-import { flush } from "@assertive/helper";
 import fs from "node:fs";
 
 export class AssertiveReporter implements Reporter {
@@ -100,8 +98,6 @@ export class AssertiveReporter implements Reporter {
       return;
     }
 
-    const metadata = flush(test.title);
-
     const traceAttachment = result.attachments.find((attachment) =>
       attachment.path?.endsWith("trace.zip"),
     );
@@ -139,16 +135,14 @@ export class AssertiveReporter implements Reporter {
       return;
     }
 
-    let testCase = await this.client.getTestCaseByExternalId(test.title);
+   const testCase = await this.client.getTestCaseByExternalId(
+      runResult.externalId,
+    );
 
     if (!testCase) {
-      testCase = await this.client.discoverTestCase(
-        test.title,
-        test.title,
-        metadata,
+      throw new Error(
+        `Unknown TestCase '${runResult.externalId}'. Run 'assertive sync' first.`,
       );
-
-      console.warn(`[Assertive] Discovered TestCase: ${test.title}`);
     }
 
     this.results.push(runResult);

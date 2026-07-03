@@ -7,7 +7,6 @@ import { ERROR_CODES } from "@assertive/shared";
 
 import {
   createTestCaseSchema,
-  discoverTestCasesSchema,
   updateTestCaseSchema,
 } from "../validators/test-case.validator";
 import { TestStatus } from "@prisma/client";
@@ -86,27 +85,6 @@ testCaseRoutes.get("/by-external-id/:externalId", async (c) => {
   }
 
   return c.json(ok(testCase));
-});
-
-testCaseRoutes.post("/discover", async (c) => {
-  const body = discoverTestCasesSchema.parse(await c.req.json());
-  const projectId = c.get("projectId");
-
-  const existing = await testCaseService.findByExternalId(
-    body.externalId,
-    projectId,
-  );
-
-  if (existing) {
-    return c.json(ok(existing));
-  }
-
-  const testCase = await testCaseService.create(projectId, {
-    externalId: body.externalId,
-    title: body.title,
-  });
-
-  return c.json(ok(testCase), 201);
 });
 
 testCaseRoutes.get("/:id", async (c) => {

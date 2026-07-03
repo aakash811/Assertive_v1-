@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   createTestCaseSchema,
   updateTestCaseSchema,
-  discoverTestCasesSchema,
 } from "../../validators/test-case.validator";
 
 describe("createTestCaseSchema", () => {
@@ -32,16 +31,5 @@ describe("updateTestCaseSchema", () => {
     });
 
     expect(result.title).toBe("Updated");
-  });
-});
-
-describe("discoverTestCasesSchema", () => {
-  it("accepts valid payload", () => {
-    const result = discoverTestCasesSchema.parse({
-      externalId: "auth.login",
-      title: "Login",
-    });
-
-    expect(result.title).toBe("Login");
   });
 });
