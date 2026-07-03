@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "../lib/prisma";
 import { runBatchRepository } from "../repositories/run-batch.repository";
 import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
@@ -9,6 +8,7 @@ import {
 } from "../validators/run-batch.validator";
 import { testRunService } from "./test-run.service";
 import { TestStatus } from "@prisma/client";
+import { testCaseRepository } from "../repositories/test-case.repository";
 
 export const runBatchService = {
   create(projectId: string, data: CreateRunBatchDto) {
@@ -42,12 +42,12 @@ export const runBatchService = {
   ) {
     let uploaded = 0;
     for (const result of results) {
-      const testCase = await prisma.testCase.findFirst({
-        where: {
-          externalId: result.externalId,
-          projectId,
-        },
-      });
+      // Reporter only uploads execution data.
+      // Test inventory must already exist via Sync.
+      const testCase = await testCaseRepository.findByExternalId(
+        result.externalId, 
+        projectId 
+      );
 
       if (!testCase) {
         throw new AppError(
@@ -57,14 +57,14 @@ export const runBatchService = {
         );
       }
 
-      const testRunData: Prisma.TestRunUncheckedCreateInput = {
+      const testRunData = {
         testCaseId: testCase.id,
         runBatchId: batchId,
         status: result.status as TestStatus,
         durationMs: result.durationMs,
         errorMessage: result.errorMessage,
         traceUrl: result.traceUrl,
-      } as Prisma.TestRunUncheckedCreateInput;
+      };
 
       await testRunService.create({
         ...testRunData,

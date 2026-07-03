@@ -11,9 +11,7 @@ vi.mock("../../lib/prisma", () => ({
 vi.mock("../../repositories/run-batch.repository", () => ({
   runBatchRepository: {
     create: vi.fn(),
-
     findMany: vi.fn(),
-
     findById: vi.fn(),
   },
 }));
@@ -24,12 +22,16 @@ vi.mock("../../services/test-run.service", () => ({
   },
 }));
 
+vi.mock("../../repositories/test-case.repository", () => ({
+  testCaseRepository: {
+    findByExternalId: vi.fn(),
+  },
+}));
+
 import { prisma } from "../../lib/prisma";
-
 import { runBatchRepository } from "../../repositories/run-batch.repository";
-
+import { testCaseRepository } from "../../repositories/test-case.repository";
 import { testRunService } from "../../services/test-run.service";
-
 import { runBatchService } from "../../services/run-batch.service";
 import { AppError } from "../../lib/app-error";
 
@@ -65,7 +67,6 @@ describe("runBatchService", () => {
   it("gets batch", async () => {
     await runBatchService.get(
       "batch-1",
-
       "project-1",
     );
 
@@ -76,21 +77,18 @@ describe("runBatchService", () => {
   });
 
   it("uploads results", async () => {
-    vi.mocked(prisma.testCase.findFirst).mockResolvedValue({
+    vi.mocked(testCaseRepository.findByExternalId).mockResolvedValue({
       id: "tc-1",
-    } as never);
+    } as any);
 
     await runBatchService.upload(
       "batch-1",
-
       "project-1",
 
       [
         {
           externalId: "auth.login",
-
           status: "PASSED",
-
           durationMs: 100,
         },
       ],
@@ -98,22 +96,16 @@ describe("runBatchService", () => {
 
     expect(testRunService.create).toHaveBeenCalledWith({
       testCaseId: "tc-1",
-
       runBatchId: "batch-1",
-
       status: "PASSED",
-
       durationMs: 100,
-
       errorMessage: undefined,
-
       traceUrl: undefined,
     });
   });
 
   it("throws for unknown test case", async () => {
-    vi.mocked(prisma.testCase.findFirst).mockResolvedValue(null);
-
+    vi.mocked(testCaseRepository.findByExternalId).mockResolvedValue(null);
     await expect(
       runBatchService.upload(
         "batch-1",
