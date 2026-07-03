@@ -85,8 +85,9 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
 
       const suite = getSuiteName(path);
 
-      const testCase: SyncTestCase = {
-        externalId: `${relativeFilePath}:${title}`,
+      let externalId: string | undefined;
+
+      const testCase: Omit<SyncTestCase, "externalId"> = {
         title,
         filePath: relativeFilePath,
         suite,
@@ -118,7 +119,7 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
             const arg = args[1];
 
             if (arg?.type === "StringLiteral") {
-              testCase.externalId = arg.value;
+              externalId = arg.value;
             }
           }
 
@@ -167,9 +168,16 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
         },
       });
 
-      if (testCase.externalId !== `${relativeFilePath}:${title}`) {
-        results.push(testCase);
+      if (!externalId) {
+        throw new Error(
+          `Missing assertive.id() for test "${title}" in ${relativeFilePath}`,
+        );
       }
+
+      results.push({
+        externalId,
+        ...testCase,
+      });
     },
   });
 
