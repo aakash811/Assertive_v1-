@@ -186,29 +186,24 @@ describe("testRunService", () => {
   it("delegates list and get", async () => {
     await testRunService.list(
       "project-1",
-
       1,
-
       20,
     );
 
     await testRunService.get(
       "run-1",
-
       "project-1",
     );
 
     expect(testRunRepository.findMany).toHaveBeenCalledWith(
       "project-1",
-
       1,
-
       20,
+      undefined
     );
 
     expect(testRunRepository.findById).toHaveBeenCalledWith(
       "run-1",
-
       "project-1",
     );
   });

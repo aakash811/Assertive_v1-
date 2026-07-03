@@ -31,6 +31,7 @@ import { runBatchRepository } from "../../repositories/run-batch.repository";
 import { testRunService } from "../../services/test-run.service";
 
 import { runBatchService } from "../../services/run-batch.service";
+import { AppError } from "../../lib/app-error";
 
 describe("runBatchService", () => {
   beforeEach(() => {
@@ -110,27 +111,20 @@ describe("runBatchService", () => {
     });
   });
 
-  it("skips missing test case", async () => {
-    vi.mocked(prisma.testCase.findFirst).mockResolvedValue(null as never);
+  it("throws for unknown test case", async () => {
+    vi.mocked(prisma.testCase.findFirst).mockResolvedValue(null);
 
-    const result = await runBatchService.upload(
-      "batch-1",
-
-      "project-1",
-
-      [
-        {
-          externalId: "missing",
-
-          status: "FAILED",
-        },
-      ],
-    );
-
-    expect(testRunService.create).not.toHaveBeenCalled();
-
-    expect(result).toEqual({
-      uploaded: 1,
-    });
+    await expect(
+      runBatchService.upload(
+        "batch-1",
+        "project-1",
+        [
+          {
+            externalId: "missing",
+            status: "PASSED",
+          },
+        ],
+      ),
+    ).rejects.toBeInstanceOf(AppError);
   });
 });
