@@ -2,33 +2,69 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
+      - develop
 
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   verify:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: assertive
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/assertive
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
-      - uses: actions/setup-node@v4
-
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-
           cache: pnpm
 
-      - run: pnpm install
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm --filter @assertive/database prisma generate
+      - name: Generate Prisma Client
+        run: pnpm --filter @assertive/database prisma generate
 
-      - run: pnpm typecheck
+      - name: Apply database migrations
+        run: pnpm --filter @assertive/database prisma migrate deploy
 
-      - run: pnpm lint
+      - name: Type Check
+        run: pnpm typecheck
 
-      - run: pnpm test
+      - name: Lint
+        run: pnpm lint
 
-      - run: pnpm build
+      - name: Run Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
