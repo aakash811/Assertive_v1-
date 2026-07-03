@@ -3,9 +3,173 @@ import { Prisma } from "@prisma/client";
 import { historyRepository } from "../repositories/history.repository";
 import type { SyncTestCase } from "@assertive/shared";
 import { generateMetadataDiff } from "../utils/history-diff";
+import { AppError } from "../lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
+
+function validatePayload(testCases: SyncTestCase[]) {
+  const ids = new Set<string>();
+
+  for (const test of testCases) {
+    if (!test.externalId?.trim()) {
+      throw new AppError(
+        ERROR_CODES.VALIDATION_ERROR,
+        "Missing externalId",
+        400,
+      );
+    }
+
+    if (ids.has(test.externalId)) {
+      throw new AppError(
+        ERROR_CODES.VALIDATION_ERROR,
+        `Duplicate externalId '${test.externalId}' found in sync payload.`,
+        400,
+      );
+    }
+
+    ids.add(test.externalId);
+  }
+}
+
+async function resolveSuite(
+  projectId: string,
+  suiteName?: string,
+): Promise<string | undefined> {
+  if (!suiteName) {
+    return undefined;
+  }
+
+  let suite = await prisma.testSuite.findFirst({
+    where: {
+      projectId,
+      name: suiteName,
+    },
+  });
+
+  if (!suite) {
+    suite = await prisma.testSuite.create({
+      data: {
+        projectId,
+        name: suiteName,
+      },
+    });
+  }
+
+  return suite.id;
+}
+
+async function syncTags(
+  testCaseId: string,
+  projectId: string,
+  tags: string[],
+) {
+  await prisma.testCaseTag.deleteMany({
+    where: {
+      testCaseId,
+    },
+  });
+
+  for (const tagName of tags) {
+    let tag = await prisma.tag.findFirst({
+      where: {
+        projectId,
+        name: tagName,
+      },
+    });
+
+    if (!tag) {
+      tag = await prisma.tag.create({
+        data: {
+          projectId,
+          name: tagName,
+        },
+      });
+    }
+
+    await prisma.testCaseTag.create({
+      data: {
+        testCaseId,
+        tagId: tag.id,
+      },
+    });
+  }
+}
+
+async function recordHistory(
+  previous: Prisma.TestCaseGetPayload<{}> | undefined,
+  current: SyncTestCase,
+  dbTestId: string,
+) {
+  if (!previous) {
+    await historyRepository.create({
+      testCaseId: dbTestId,
+      action: "CREATED",
+    });
+
+    return "created";
+  }
+
+  if (previous.syncState === "STALE") {
+    await historyRepository.create({
+      testCaseId: dbTestId,
+      action: "RESTORED",
+    });
+
+    return "restored";
+  }
+
+  const changes = generateMetadataDiff(previous, current);
+
+  if (Object.keys(changes).length > 0) {
+    await historyRepository.create({
+      testCaseId: dbTestId,
+      action: "UPDATED",
+      changes,
+    });
+
+    return "updated";
+  }
+
+  return "unchanged";
+}
+
+async function markStaleTests(
+  existing: Awaited<ReturnType<typeof prisma.testCase.findMany>>,
+  incomingIds: Set<string>,
+) {
+  let stale = 0;
+
+  for (const test of existing) {
+    if (incomingIds.has(test.externalId)) {
+      continue;
+    }
+
+    if (test.syncState === "STALE") {
+      continue;
+    }
+
+    await prisma.testCase.update({
+      where: {
+        id: test.id,
+      },
+      data: {
+        syncState: "STALE",
+      },
+    });
+
+    await historyRepository.create({
+      testCaseId: test.id,
+      action: "STALE",
+    });
+
+    stale++;
+  }
+
+  return stale;
+}
 
 export const syncService = {
   async sync(projectId: string, testCases: SyncTestCase[]) {
+    validatePayload(testCases);
     const existing = await prisma.testCase.findMany({
       where: {
         projectId,
@@ -22,31 +186,14 @@ export const syncService = {
 
     for (const test of testCases) {
       const previous = existingMap.get(test.externalId);
-      const testCaseWhereUnique: Prisma.TestCaseWhereUniqueInput = {
+      const testCaseWhereUnique = {
         externalId: test.externalId,
-      } as Prisma.TestCaseWhereUniqueInput;
+      };
 
-      let suiteId: string | undefined;
-
-      if (test.suite) {
-        let suite = await prisma.testSuite.findFirst({
-          where: {
-            projectId,
-            name: test.suite,
-          },
-        });
-
-        if (!suite) {
-          suite = await prisma.testSuite.create({
-            data: {
-              projectId,
-              name: test.suite,
-            },
-          });
-        }
-
-        suiteId = suite.id;
-      }
+      const suiteId = await resolveSuite(
+        projectId,
+        test.suite,
+      );
 
       const dbTest = await prisma.testCase.upsert({
         where: testCaseWhereUnique,
@@ -76,90 +223,37 @@ export const syncService = {
         },
       });
 
-      // HISTORY
-      if (!previous) {
-        await historyRepository.create({
-          testCaseId: dbTest.id,
-          action: "CREATED",
-        });
-        created++;
-      } else if (previous.syncState === "STALE") {
-        await historyRepository.create({
-          testCaseId: dbTest.id,
-          action: "RESTORED",
-        });
-        restored++;
-      } else {
-        const changes = generateMetadataDiff(previous, test);
+      const action = await recordHistory(
+        previous,
+        test,
+        dbTest.id,
+      );
 
-        const hasChanges = Object.keys(changes).length > 0;
+      switch (action) {
+        case "created":
+          created++;
+          break;
 
-        if (hasChanges) {
-          await historyRepository.create({
-            testCaseId: dbTest.id,
-            action: "UPDATED",
-            changes,
-          });
+        case "updated":
           updated++;
-        }
+          break;
+
+        case "restored":
+          restored++;
+          break;
       }
 
-      // TAGS
-
-      await prisma.testCaseTag.deleteMany({
-        where: {
-          testCaseId: dbTest.id,
-        },
-      });
-
-      for (const tagName of test.tags) {
-        let tag = await prisma.tag.findFirst({
-          where: {
-            projectId,
-            name: tagName,
-          },
-        });
-
-        if (!tag) {
-          tag = await prisma.tag.create({
-            data: {
-              projectId,
-              name: tagName,
-            },
-          });
-        }
-
-        await prisma.testCaseTag.create({
-          data: {
-            testCaseId: dbTest.id,
-            tagId: tag.id,
-          },
-        });
-      }
+      await syncTags(
+        dbTest.id,
+        projectId,
+        test.tags,
+      );
     }
 
-    // STALE TESTS
-
-    for (const test of existing) {
-      if (!incomingIds.has(test.externalId)) {
-        if (test.syncState !== "STALE") {
-          await prisma.testCase.update({
-            where: {
-              id: test.id,
-            },
-            data: {
-              syncState: "STALE",
-            },
-          });
-          stale++;
-
-          await historyRepository.create({
-            testCaseId: test.id,
-            action: "STALE",
-          });
-        }
-      }
-    }
+    stale = await markStaleTests(
+      existing,
+      incomingIds,
+    );
 
     return {
       synced: testCases.length,
