@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { runBatchRepository } from "../repositories/run-batch.repository";
+import { AppError } from "../lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
 import {
   BatchUploadResult,
   CreateRunBatchDto,
@@ -38,6 +40,7 @@ export const runBatchService = {
     projectId: string,
     results: BatchUploadResult[],
   ) {
+    let uploaded = 0;
     for (const result of results) {
       const testCase = await prisma.testCase.findFirst({
         where: {
@@ -47,7 +50,11 @@ export const runBatchService = {
       });
 
       if (!testCase) {
-        continue;
+        throw new AppError(
+          ERROR_CODES.TEST_CASE_NOT_FOUND,
+          `Unknown test '${result.externalId}'. Run 'assertive sync' first.`,
+          404,
+        );
       }
 
       const testRunData: Prisma.TestRunUncheckedCreateInput = {
@@ -62,10 +69,10 @@ export const runBatchService = {
       await testRunService.create({
         ...testRunData,
       });
+      uploaded++;
     }
-
     return {
-      uploaded: results.length,
+      uploaded,
     };
   },
 };

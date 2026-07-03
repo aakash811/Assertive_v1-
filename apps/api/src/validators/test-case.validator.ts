@@ -16,7 +16,3 @@ export const updateTestCaseSchema = z.object({
   description: z.string().optional(),
 });
 
-export const discoverTestCasesSchema = z.object({
-  externalId: z.string().min(1),
-  title: z.string().min(1),
-});
