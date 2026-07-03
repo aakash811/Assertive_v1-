@@ -8,16 +8,16 @@ export const historyService = {
     return historyRepository.list(testCaseId, page, limit);
   },
 
-  async listByUniqueId(
+  async listByExternalId(
     projectId: string,
-    uniqueId: string,
+    externalId: string,
     page: number,
     limit: number,
   ) {
     const testCase = await prisma.testCase.findFirst({
       where: {
         projectId,
-        uniqueId,
+        externalId,
       },
     });
 

@@ -1,5 +1,5 @@
 export interface SyncTestCase {
-  uniqueId: string;
+  externalId: string;
   title: string;
   filePath: string;
   owner?: string;

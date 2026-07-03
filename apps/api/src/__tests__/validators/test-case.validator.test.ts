@@ -8,17 +8,17 @@ import {
 describe("createTestCaseSchema", () => {
   it("accepts valid payload", () => {
     const result = createTestCaseSchema.parse({
-      uniqueId: "auth.login",
+      externalId: "auth.login",
       title: "Login",
     });
 
-    expect(result.uniqueId).toBe("auth.login");
+    expect(result.externalId).toBe("auth.login");
   });
 
-  it("rejects empty uniqueId", () => {
+  it("rejects empty externalId", () => {
     expect(() =>
       createTestCaseSchema.parse({
-        uniqueId: "",
+        externalId: "",
         title: "Login",
       }),
     ).toThrow();
@@ -38,7 +38,7 @@ describe("updateTestCaseSchema", () => {
 describe("discoverTestCasesSchema", () => {
   it("accepts valid payload", () => {
     const result = discoverTestCasesSchema.parse({
-      uniqueId: "auth.login",
+      externalId: "auth.login",
       title: "Login",
     });
 

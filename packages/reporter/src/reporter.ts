@@ -107,7 +107,7 @@ export class AssertiveReporter implements Reporter {
     );
 
     const runResult: BatchResult = {
-      uniqueId: test.title,
+      externalId: test.title,
       status: result.status.toUpperCase(),
       durationMs: result.duration,
       errorMessage: result.error?.message,
@@ -139,7 +139,7 @@ export class AssertiveReporter implements Reporter {
       return;
     }
 
-    let testCase = await this.client.getTestCaseByUniqueId(test.title);
+    let testCase = await this.client.getTestCaseByExternalId(test.title);
 
     if (!testCase) {
       testCase = await this.client.discoverTestCase(

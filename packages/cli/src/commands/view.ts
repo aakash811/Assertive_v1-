@@ -19,12 +19,12 @@ function openUrl(url: string) {
 }
 
 export const viewCommand = new Command("view")
-  .argument("<uniqueId>")
+  .argument("<externalId>")
   .description("Open a test case in the browser")
-  .action(async (uniqueId) => {
+  .action(async (externalId) => {
     try {
       const testCase = await apiGet(
-        `/api/test-cases/by-unique-id/${encodeURIComponent(uniqueId)}`,
+        `/api/test-cases/by-external-id/${encodeURIComponent(externalId)}`,
       );
 
       const id = testCase.id;

@@ -86,7 +86,7 @@ describe("runBatchService", () => {
 
       [
         {
-          uniqueId: "auth.login",
+          externalId: "auth.login",
 
           status: "PASSED",
 
@@ -120,7 +120,7 @@ describe("runBatchService", () => {
 
       [
         {
-          uniqueId: "missing",
+          externalId: "missing",
 
           status: "FAILED",
         },

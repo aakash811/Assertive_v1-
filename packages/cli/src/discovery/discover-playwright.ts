@@ -21,7 +21,7 @@ export async function discoverPlaywrightTests() {
 
     for (const match of matches) {
       tests.push({
-        uniqueId: match[1],
+        externalId: match[1],
         title: match[1],
       });
     }

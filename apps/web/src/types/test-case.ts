@@ -1,6 +1,6 @@
 export type TestCase = {
   id: string;
-  uniqueId: string;
+  externalId: string;
   title: string;
   description: string | null;
   filePath: string | null;
@@ -46,7 +46,7 @@ export type TestRun = {
 
 export type MetadataTestCase = {
   id: string;
-  uniqueId: string;
+  externalId: string;
   title: string;
   owner?: string | null;
   priority?: string | null;

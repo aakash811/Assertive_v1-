@@ -25,7 +25,7 @@ describe("uploadResultsSchema", () => {
     const result = uploadResultsSchema.parse({
       results: [
         {
-          uniqueId: "auth.login",
+          externalId: "auth.login",
           status: "PASSED",
         },
       ],
@@ -39,7 +39,7 @@ describe("uploadResultsSchema", () => {
       uploadResultsSchema.parse({
         results: [
           {
-            uniqueId: "auth",
+            externalId: "auth",
             status: "UNKNOWN",
           },
         ],

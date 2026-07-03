@@ -89,7 +89,7 @@ export const runBatchRepository = {
 
                 title: true,
 
-                uniqueId: true,
+                externalId: true,
               },
             },
           },

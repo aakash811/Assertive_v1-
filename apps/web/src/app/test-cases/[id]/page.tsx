@@ -21,7 +21,7 @@ export default async function TestCasePage({ params }: Props) {
       <div>
         <h1 className="text-3xl font-bold">{testCase.title}</h1>
 
-        <p className="text-gray-500">{testCase.uniqueId}</p>
+        <p className="text-gray-500">{testCase.externalId}</p>
       </div>
 
       <OverrideStatusModal testCaseId={id} />

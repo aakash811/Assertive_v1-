@@ -22,7 +22,7 @@ export interface TestMetadata {
 }
 
 export interface BatchResult {
-  uniqueId: string;
+  externalId: string;
   status: string;
   durationMs?: number;
   errorMessage?: string;

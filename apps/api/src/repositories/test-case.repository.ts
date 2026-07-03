@@ -3,7 +3,7 @@ import type { Prisma, TestStatus } from "@prisma/client";
 
 export const testCaseRepository = {
   create(data: {
-    uniqueId: string;
+    externalId: string;
     title: string;
     description?: string;
     projectId: string;
@@ -56,7 +56,7 @@ export const testCaseRepository = {
         },
 
         {
-          uniqueId: {
+          externalId: {
             contains: q,
             mode: "insensitive",
           },
@@ -230,10 +230,10 @@ export const testCaseRepository = {
     });
   },
 
-  findByUniqueId(uniqueId: string, projectId: string) {
+  findByExternalId(externalId: string, projectId: string) {
     return prisma.testCase.findFirst({
       where: {
-        uniqueId,
+        externalId,
         projectId,
       },
     });
