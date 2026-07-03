@@ -1,11 +1,11 @@
 import { testCaseRepository } from "../repositories/test-case.repository";
 import type { TestStatus } from "@prisma/client";
-import { generateUniqueId } from "../lib/generate-unique-id";
 
 export const testCaseService = {
   async create(
     projectId: string,
     data: {
+      externalId: string;
       title: string;
       description?: string;
       owner?: string;
@@ -14,12 +14,9 @@ export const testCaseService = {
       suiteId?: string;
     },
   ) {
-    const uniqueId = await generateUniqueId(projectId);
-
     return testCaseRepository.create({
       ...data,
       projectId,
-      uniqueId,
     });
   },
 
@@ -60,7 +57,7 @@ export const testCaseService = {
     return testCaseRepository.delete(id, projectId);
   },
 
-  findByUniqueId(uniqueId: string, projectId: string) {
-    return testCaseRepository.findByUniqueId(uniqueId, projectId);
+  findByExternalId(externalId: string, projectId: string) {
+    return testCaseRepository.findByExternalId(externalId, projectId);
   },
 };

@@ -12,8 +12,8 @@ export const syncService = {
       },
     });
 
-    const incomingIds = new Set(testCases.map((t) => t.uniqueId));
-    const existingMap = new Map(existing.map((test) => [test.uniqueId, test]));
+    const incomingIds = new Set(testCases.map((t) => t.externalId));
+    const existingMap = new Map(existing.map((test) => [test.externalId, test]));
 
     let created = 0;
     let updated = 0;
@@ -21,9 +21,9 @@ export const syncService = {
     let stale = 0;
 
     for (const test of testCases) {
-      const previous = existingMap.get(test.uniqueId);
+      const previous = existingMap.get(test.externalId);
       const testCaseWhereUnique: Prisma.TestCaseWhereUniqueInput = {
-        uniqueId: test.uniqueId,
+        externalId: test.externalId,
       } as Prisma.TestCaseWhereUniqueInput;
 
       let suiteId: string | undefined;
@@ -52,7 +52,7 @@ export const syncService = {
         where: testCaseWhereUnique,
 
         create: {
-          uniqueId: test.uniqueId,
+          externalId: test.externalId,
           title: test.title,
           filePath: test.filePath,
           owner: test.owner,
@@ -141,7 +141,7 @@ export const syncService = {
     // STALE TESTS
 
     for (const test of existing) {
-      if (!incomingIds.has(test.uniqueId)) {
+      if (!incomingIds.has(test.externalId)) {
         if (test.syncState !== "STALE") {
           await prisma.testCase.update({
             where: {

@@ -14,7 +14,7 @@ type RunBatchResponse = {
 
 type TestCaseResponse = {
   id: string;
-  uniqueId: string;
+  externalId: string;
 };
 
 type EmptyResponse = {
@@ -87,10 +87,10 @@ export class AssertiveClient {
     });
   }
 
-  async getTestCaseByUniqueId(uniqueId: string) {
+  async getTestCaseByExternalId(externalId: string) {
     try {
       return await this.request<TestCaseResponse>(
-        `${this.config.apiUrl}/api/test-cases/by-unique-id/${encodeURIComponent(uniqueId)}`,
+        `${this.config.apiUrl}/api/test-cases/by-external-id/${encodeURIComponent(externalId)}`,
         {
           headers: this.headers(),
         },
@@ -101,7 +101,7 @@ export class AssertiveClient {
   }
 
   async discoverTestCase(
-    uniqueId: string,
+    externalId: string,
     title: string,
     metadata?: TestMetadata,
   ) {
@@ -113,7 +113,7 @@ export class AssertiveClient {
         headers: this.headers(),
 
         body: JSON.stringify({
-          uniqueId,
+          externalId,
 
           title,
 

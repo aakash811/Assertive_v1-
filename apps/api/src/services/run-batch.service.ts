@@ -41,7 +41,7 @@ export const runBatchService = {
     for (const result of results) {
       const testCase = await prisma.testCase.findFirst({
         where: {
-          uniqueId: result.uniqueId,
+          externalId: result.externalId,
           projectId,
         },
       });

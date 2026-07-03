@@ -74,7 +74,7 @@ describe("syncService", () => {
 
       [
         {
-          uniqueId: "auth.login",
+          externalId: "auth.login",
 
           title: "Login",
 
@@ -101,7 +101,7 @@ describe("syncService", () => {
       {
         id: "tc-1",
 
-        uniqueId: "auth.login",
+        externalId: "auth.login",
 
         syncState: "SYNCED",
       },
@@ -120,7 +120,7 @@ describe("syncService", () => {
 
       [
         {
-          uniqueId: "auth.login",
+          externalId: "auth.login",
 
           title: "Login",
 
@@ -147,7 +147,7 @@ describe("syncService", () => {
       {
         id: "tc-1",
 
-        uniqueId: "auth.login",
+        externalId: "auth.login",
 
         syncState: "STALE",
       },
@@ -162,7 +162,7 @@ describe("syncService", () => {
 
       [
         {
-          uniqueId: "auth.login",
+          externalId: "auth.login",
 
           title: "Login",
 
@@ -189,7 +189,7 @@ describe("syncService", () => {
       {
         id: "tc-1",
 
-        uniqueId: "old.test",
+        externalId: "old.test",
 
         syncState: "SYNCED",
       },
