@@ -9,7 +9,7 @@ export type CreateRunBatchDto = {
 };
 
 export type BatchUploadResult = {
-  uniqueId: string;
+  externalId: string;
   status: string;
   durationMs?: number;
   errorMessage?: string;
@@ -29,7 +29,7 @@ export const createRunBatchSchema = z.object({
 export const uploadResultsSchema = z.object({
   results: z.array(
     z.object({
-      uniqueId: z.string(),
+      externalId: z.string(),
       status: z.enum(["PASSED", "FAILED", "SKIPPED"]),
       durationMs: z.number().optional(),
       errorMessage: z.string().optional(),

@@ -48,7 +48,7 @@ export const createCommand = new Command("create")
       'import { assertive } from "@assertive/helper";',
       "",
       `test(${JSON.stringify(title)}, async () => {`,
-      `  assertive.id(${JSON.stringify(title)}, ${JSON.stringify(created.uniqueId)});`,
+      `  assertive.id(${JSON.stringify(title)}, ${JSON.stringify(created.externalId)});`,
     ];
 
     if (options.suite) {

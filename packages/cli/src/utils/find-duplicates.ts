@@ -6,13 +6,13 @@ export function findDuplicates(tests: SyncTestCase[]) {
   const duplicates: string[] = [];
 
   for (const test of tests) {
-    if (seen.has(test.uniqueId)) {
-      duplicates.push(test.uniqueId);
+    if (seen.has(test.externalId)) {
+      duplicates.push(test.externalId);
 
       continue;
     }
 
-    seen.add(test.uniqueId);
+    seen.add(test.externalId);
   }
 
   return duplicates;

@@ -2,12 +2,12 @@ import { Command } from "commander";
 import { apiGet } from "../lib/api";
 
 export const historyCommand = new Command("history")
-  .argument("<uniqueId>")
+  .argument("<externalId>")
   .description("Show test history")
-  .action(async (uniqueId) => {
+  .action(async (externalId) => {
     try {
       const result = await apiGet(
-        `/api/history/${encodeURIComponent(uniqueId)}`,
+        `/api/history/${encodeURIComponent(externalId)}`,
       );
 
       console.log("");

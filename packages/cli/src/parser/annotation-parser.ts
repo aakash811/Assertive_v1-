@@ -86,7 +86,7 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
       const suite = getSuiteName(path);
 
       const testCase: SyncTestCase = {
-        uniqueId: `${relativeFilePath}:${title}`,
+        externalId: `${relativeFilePath}:${title}`,
         title,
         filePath: relativeFilePath,
         suite,
@@ -118,7 +118,7 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
             const arg = args[1];
 
             if (arg?.type === "StringLiteral") {
-              testCase.uniqueId = arg.value;
+              testCase.externalId = arg.value;
             }
           }
 
@@ -167,7 +167,7 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
         },
       });
 
-      if (testCase.uniqueId !== `${relativeFilePath}:${title}`) {
+      if (testCase.externalId !== `${relativeFilePath}:${title}`) {
         results.push(testCase);
       }
     },

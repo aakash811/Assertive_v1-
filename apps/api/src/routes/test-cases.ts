@@ -69,11 +69,11 @@ testCaseRoutes.get("/", async (c) => {
   );
 });
 
-testCaseRoutes.get("/by-unique-id/:uniqueId", async (c) => {
+testCaseRoutes.get("/by-external-id/:externalId", async (c) => {
   const projectId = c.get("projectId");
 
-  const testCase = await testCaseService.findByUniqueId(
-    c.req.param("uniqueId"),
+  const testCase = await testCaseService.findByExternalId(
+    c.req.param("externalId"),
     projectId,
   );
 
@@ -92,8 +92,8 @@ testCaseRoutes.post("/discover", async (c) => {
   const body = discoverTestCasesSchema.parse(await c.req.json());
   const projectId = c.get("projectId");
 
-  const existing = await testCaseService.findByUniqueId(
-    body.uniqueId,
+  const existing = await testCaseService.findByExternalId(
+    body.externalId,
     projectId,
   );
 
@@ -102,7 +102,7 @@ testCaseRoutes.post("/discover", async (c) => {
   }
 
   const testCase = await testCaseService.create(projectId, {
-    uniqueId: body.uniqueId,
+    externalId: body.externalId,
     title: body.title,
   });
 

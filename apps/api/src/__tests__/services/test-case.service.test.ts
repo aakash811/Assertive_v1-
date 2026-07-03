@@ -12,7 +12,7 @@ vi.mock("../../repositories/test-case.repository", () => ({
 
     delete: vi.fn(),
 
-    findByUniqueId: vi.fn(),
+    findByExternalId: vi.fn(),
   },
 }));
 
@@ -27,7 +27,7 @@ describe("testCaseService", () => {
 
   it("creates test case", async () => {
     await testCaseService.create("project-1", {
-      uniqueId: "auth.login",
+      externalId: "auth.login",
 
       title: "Login test",
     });
@@ -35,7 +35,7 @@ describe("testCaseService", () => {
     expect(testCaseRepository.create).toHaveBeenCalledWith({
       projectId: "project-1",
 
-      uniqueId: "auth.login",
+      externalId: "auth.login",
 
       title: "Login test",
     });
@@ -94,14 +94,14 @@ describe("testCaseService", () => {
     );
   });
 
-  it("finds by unique id", async () => {
-    await testCaseService.findByUniqueId(
+  it("finds by external id", async () => {
+    await testCaseService.findByExternalId(
       "auth.login",
 
       "project-1",
     );
 
-    expect(testCaseRepository.findByUniqueId).toHaveBeenCalledWith(
+    expect(testCaseRepository.findByExternalId).toHaveBeenCalledWith(
       "auth.login",
 
       "project-1",

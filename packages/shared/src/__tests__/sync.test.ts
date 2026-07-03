@@ -4,21 +4,21 @@ import type { SyncPayload, SyncResponse, SyncTestCase } from "../sync";
 describe("SyncTestCase", () => {
   it("creates a valid test case object", () => {
     const testCase: SyncTestCase = {
-      uniqueId: "TST-001",
+      externalId: "TST-001",
       title: "Login works",
       filePath: "tests/auth/login.spec.ts",
       tags: ["auth"],
       customFields: {},
     };
 
-    expect(testCase.uniqueId).toBe("TST-001");
+    expect(testCase.externalId).toBe("TST-001");
     expect(testCase.title).toBe("Login works");
     expect(testCase.tags).toContain("auth");
   });
 
   it("supports optional properties", () => {
     const testCase: SyncTestCase = {
-      uniqueId: "TST-002",
+      externalId: "TST-002",
       title: "Checkout",
       filePath: "tests/checkout.spec.ts",
       owner: "Alice",
@@ -43,7 +43,7 @@ describe("SyncPayload", () => {
     const payload: SyncPayload = {
       testCases: [
         {
-          uniqueId: "TST-001",
+          externalId: "TST-001",
           title: "Login",
           filePath: "tests/login.spec.ts",
           tags: [],
