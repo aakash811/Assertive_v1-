@@ -126,7 +126,7 @@ model TestSuite {
 model TestCase {
   id String @id @default(uuid())
 
-  externalId String @unique
+  externalId String
 
   title String
 
@@ -175,7 +175,7 @@ model TestCase {
   @@index([lastStatus])
   @@index([syncState])
   @@index([isFlaky])
-  @@index([projectId, externalId])
+  @@unique([projectId, externalId])
 }
 
 model Tag {

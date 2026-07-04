@@ -12,37 +12,47 @@ export const projectRepository = {
     });
   },
 
-  findById(id: string) {
-    return prisma.project.findUnique({
+  findById(id: string, organizationId: string) {
+    return prisma.project.findFirst({
       where: {
         id,
+        organizationId,
       },
     });
   },
 
-  create(data: { name: string; slug: string; organizationId: string }) {
+  create(data: {
+    name: string;
+    slug: string;
+    organizationId: string;
+  }) {
     return prisma.project.create({
       data,
     });
   },
 
-  update(id: string, name: string) {
-    return prisma.project.update({
+  update(
+    id: string,
+    organizationId: string,
+    name: string,
+  ) {
+    return prisma.project.updateMany({
       where: {
         id,
+        organizationId,
       },
-
       data: {
         name,
       },
     });
   },
 
-  delete(id: string) {
-    return prisma.project.delete({
-      where: {
-        id,
-      },
+  delete(id: string, organizationId: string) {
+    return prisma.project.deleteMany({
+        where:{
+            id,
+            organizationId,
+        }
     });
   },
 };

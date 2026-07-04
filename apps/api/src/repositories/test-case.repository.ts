@@ -231,11 +231,13 @@ export const testCaseRepository = {
   },
 
   findByExternalId(externalId: string, projectId: string) {
-    return prisma.testCase.findFirst({
+    return prisma.testCase.findUnique({
       where: {
-        externalId,
-        projectId,
+        projectId_externalId: {
+          projectId,
+          externalId,
+        },
       },
     });
-  },
+  }
 };

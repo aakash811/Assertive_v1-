@@ -20,21 +20,22 @@ projectsRoutes.get("/", async (c) => {
   return c.json(ok(projects));
 });
 
-projectsRoutes.post("/", async (c) => {
-  const body = await c.req.json();
+  projectsRoutes.post("/", async (c) => {
+    const body = await c.req.json();
+    const organizationId = c.get("organizationId");
 
-  const project = await projectService.create({
-    name: body.name,
-    slug: body.slug,
-    organizationId: body.organizationId,
+    const project = await projectService.create(
+      organizationId,
+      body,
+    );
+
+    return c.json(ok(project), 201);
   });
-
-  return c.json(ok(project), 201);
-});
 
 projectsRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const project = await projectService.getById(id);
+  const organizationId = c.get("organizationId");
+  const project = await projectService.getById(id, organizationId);
 
   if (!project) {
     throw new AppError(ERROR_CODES.PROJECT_NOT_FOUND, "Project not found", 404);
@@ -46,14 +47,16 @@ projectsRoutes.get("/:id", async (c) => {
 projectsRoutes.patch("/:id", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json();
-  const project = await projectService.update(id, body.name);
+  const organizationId = c.get("organizationId");
+  const project = await projectService.update(id, body.name, organizationId);
 
   return c.json(ok(project));
 });
 
 projectsRoutes.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  await projectService.remove(id);
+  const organizationId = c.get("organizationId");
+  await projectService.remove(id, organizationId);
 
   return c.json(
     ok({
