@@ -1,10 +1,11 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
+import { HistoryAction } from "@assertive/shared";
 
 export const historyRepository = {
   create(data: {
     testCaseId: string;
-    action: string;
+    action: HistoryAction;
     changes?: Prisma.InputJsonValue;
     comment?: string;
     changedBy?: string;
