@@ -1,8 +1,79 @@
+import { Prisma } from "@prisma/client";
+import {
+  HISTORY_ACTIONS,
+  type HistoryAction,
+} from "@assertive/shared";
 import { historyRepository } from "../repositories/history.repository";
 import { prisma } from "../lib/prisma";
 
 export const historyService = {
-  create: historyRepository.create,
+  create(
+    testCaseId: string,
+    action: HistoryAction,
+    options?: {
+      changes?: Prisma.InputJsonValue;
+      comment?: string;
+      changedBy?: string;
+    },
+  ) {
+    return historyRepository.create({
+      testCaseId,
+      action,
+      ...options,
+    });
+  },
+
+  created(testCaseId: string) {
+    return this.create(testCaseId, HISTORY_ACTIONS.CREATED);
+  },
+
+  updated(
+    testCaseId: string,
+    changes: Prisma.InputJsonValue,
+  ) {
+    return this.create(testCaseId, HISTORY_ACTIONS.UPDATED, {
+      changes,
+    });
+  },
+
+  restored(testCaseId: string) {
+    return this.create(testCaseId, HISTORY_ACTIONS.RESTORED);
+  },
+
+  stale(testCaseId: string) {
+    return this.create(testCaseId, HISTORY_ACTIONS.STALE);
+  },
+
+  statusChanged(
+    testCaseId: string,
+    changes: Prisma.InputJsonValue,
+  ) {
+    return this.create(testCaseId, HISTORY_ACTIONS.STATUS_CHANGED, {
+      changes,
+    });
+  },
+
+  manualOverride(
+    testCaseId: string,
+    comment: string,
+    changes: Prisma.InputJsonValue,
+  ) {
+    return this.create(
+      testCaseId,
+      HISTORY_ACTIONS.MANUAL_OVERRIDE,
+      {
+        comment,
+        changes,
+      },
+    );
+  },
+
+  manualOverrideCleared(testCaseId: string) {
+    return this.create(
+      testCaseId,
+      HISTORY_ACTIONS.MANUAL_OVERRIDE_CLEARED,
+    );
+  },
 
   list(testCaseId: string, page: number, limit: number) {
     return historyRepository.list(testCaseId, page, limit);
@@ -14,7 +85,7 @@ export const historyService = {
     page: number,
     limit: number,
   ) {
-   const testCase = await prisma.testCase.findUnique({
+    const testCase = await prisma.testCase.findUnique({
       where: {
         projectId_externalId: {
           projectId,

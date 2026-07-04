@@ -1,5 +1,6 @@
 import { Prisma, TestStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
+import { historyService } from "./history.service";
 
 export const manualOverrideService = {
   async overrideStatus(
@@ -81,19 +82,16 @@ export const manualOverrideService = {
         data: batchUpdate,
       });
 
-      await tx.testCaseHistory.create({
-        data: {
-          testCaseId,
-          action: "STATUS_OVERRIDE",
-          comment,
-          changes: {
-            status: {
-              from: previousStatus,
-              to: status,
-            },
+      await historyService.manualOverride(
+        testCaseId,
+        comment,
+        {
+          status: {
+            from: previousStatus,
+            to: status,
           },
         },
-      });
+      );
 
       return {
         success: true,
