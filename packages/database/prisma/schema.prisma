@@ -176,6 +176,7 @@ model TestCase {
   @@index([syncState])
   @@index([isFlaky])
   @@index([projectId, externalId])
+  @@unique([projectId, externalId])
 }
 
 model Tag {
