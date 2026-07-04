@@ -100,4 +100,11 @@ export const historyService = {
 
     return historyRepository.list(testCase.id, page, limit);
   },
+
+  archived(testCaseId: string) {
+    return this.create(
+        testCaseId,
+        HISTORY_ACTIONS.ARCHIVED,
+    );
+  }
 };

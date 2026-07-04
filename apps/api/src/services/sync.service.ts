@@ -199,6 +199,7 @@ export const syncService = {
           suiteId,
           projectId,
           syncState: "SYNCED",
+          lifecycle: "ACTIVE"
         },
 
         update: {
@@ -210,6 +211,7 @@ export const syncService = {
           customFields: test.customFields,
           suiteId,
           syncState: "SYNCED",
+          lifecycle: "ACTIVE"
         },
       });
 

@@ -48,7 +48,6 @@ export const runBatchService = {
         result.externalId, 
         projectId 
       );
-
       if (!testCase) {
         throw new AppError(
           ERROR_CODES.TEST_CASE_NOT_FOUND,

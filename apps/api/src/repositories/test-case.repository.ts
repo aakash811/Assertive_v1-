@@ -25,6 +25,7 @@ export const testCaseRepository = {
       flaky?: boolean;
       suite?: string;
       syncState?: "SYNCED" | "STALE";
+      lifecycle?: "ACTIVE" | "ARCHIVED";
       testType?: string;
     },
   ) {
@@ -38,12 +39,14 @@ export const testCaseRepository = {
       flaky,
       suite,
       syncState,
+      lifecycle,
       testType,
     } = filters;
     const skip = (page - 1) * limit;
 
     const where: Prisma.TestCaseWhereInput = {
       projectId,
+      lifecycle: lifecycle ?? "ACTIVE",
     };
 
     if (q) {
@@ -144,13 +147,17 @@ export const testCaseRepository = {
     };
   },
 
-  findById(id: string, projectId: string) {
-    return prisma.testCase.findFirst({
-      where: {
-        id,
-        projectId,
-      },
+  findById(id: string, projectId: string, includeArchived = false) {
+    const where: Prisma.TestCaseWhereInput = {
+      id,
+      projectId,
+    };
 
+    if(!includeArchived) {
+      where.lifecycle = "ACTIVE";
+    }
+    return prisma.testCase.findFirst({
+      where,
       include: {
         suite: true,
 
@@ -195,6 +202,7 @@ export const testCaseRepository = {
       where: {
         id,
         projectId,
+        lifecycle: "ACTIVE",
       },
     });
 
@@ -211,7 +219,7 @@ export const testCaseRepository = {
     });
   },
 
-  async delete(id: string, projectId: string) {
+  async archive(id: string, projectId: string) {
     const existing = await prisma.testCase.findFirst({
       where: {
         id,
@@ -223,21 +231,58 @@ export const testCaseRepository = {
       throw new Error("Test case not found");
     }
 
-    return prisma.testCase.delete({
+    if (existing.lifecycle === "ARCHIVED") {
+      throw new Error("Test case already archived");
+    }
+
+    return prisma.testCase.update({
       where: {
         id,
+      },
+      data: {
+        lifecycle: "ARCHIVED",
       },
     });
   },
 
-  findByExternalId(externalId: string, projectId: string) {
-    return prisma.testCase.findUnique({
+  async restore(id: string, projectId: string) {
+    const existing = await prisma.testCase.findFirst({
       where: {
-        projectId_externalId: {
-          projectId,
-          externalId,
-        },
+        id,
+        projectId,
       },
     });
-  }
+
+    if (!existing) {
+      throw new Error("Test case not found");
+    }
+
+    if (existing.lifecycle === "ACTIVE") {
+      throw new Error("Test case already active");
+    }
+
+    return prisma.testCase.update({
+      where: {
+        id,
+      },
+      data: {
+        lifecycle: "ACTIVE",
+      },
+    });
+  },
+
+  findByExternalId(externalId: string, projectId: string, includeArchived = false) {
+    const where: Prisma.TestCaseWhereInput = {
+      externalId,
+      projectId,
+    };
+
+    if (!includeArchived) {
+      where.lifecycle = "ACTIVE";
+    }
+
+    return prisma.testCase.findFirst({
+      where,
+    });
+  },
 };

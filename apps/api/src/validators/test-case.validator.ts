@@ -16,3 +16,8 @@ export const updateTestCaseSchema = z.object({
   description: z.string().optional(),
 });
 
+export const lifecycleSchema = z.enum([
+  "ACTIVE",
+  "ARCHIVED",
+]);
+
