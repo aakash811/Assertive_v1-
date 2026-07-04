@@ -32,7 +32,8 @@ vi.mock("../../services/flakiness.service", () => ({
 
 vi.mock("../../services/history.service", () => ({
   historyService: {
-    create: vi.fn(),
+    statusChanged: vi.fn(),
+    manualOverrideCleared: vi.fn(),
   },
 }));
 
@@ -102,17 +103,15 @@ describe("testRunService", () => {
       },
     });
 
-    expect(historyService.create).toHaveBeenCalledWith({
-      testCaseId: "tc-1",
-
-      action: "STATUS_CHANGED",
-
-      changes: {
+    expect(historyService.statusChanged).toHaveBeenCalledWith(
+      "tc-1",
+      {
         status: {
+          from: undefined,
           to: "PASSED",
         },
       },
-    });
+    );
 
     expect(flakinessService.recalculate).toHaveBeenCalledWith("tc-1");
   });
@@ -176,11 +175,7 @@ describe("testRunService", () => {
       status: "PASSED",
     });
 
-    expect(historyService.create).toHaveBeenCalledWith({
-      testCaseId: "tc-1",
-
-      action: "MANUAL_OVERRIDE_CLEARED",
-    });
+   expect(historyService.manualOverrideCleared).toHaveBeenCalledWith("tc-1");
   });
 
   it("delegates list and get", async () => {

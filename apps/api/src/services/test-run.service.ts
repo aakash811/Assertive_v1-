@@ -59,20 +59,18 @@ export const testRunService = {
     });
 
     if (existing?.isManualOverride) {
-      await historyService.create({
-        testCaseId: run.testCaseId,
-        action: "MANUAL_OVERRIDE_CLEARED",
-      });
+      await historyService.manualOverrideCleared(run.testCaseId);
     }
 
-    await historyService.create({
-      testCaseId: run.testCaseId,
-
-      action: "STATUS_CHANGED",
-      changes: {
-        status: { to: run.status },
+    await historyService.statusChanged(
+      run.testCaseId,
+      {
+        status: {
+          from: existing?.lastStatus,
+          to: run.status,
+        },
       },
-    });
+    );
 
     await flakinessService.recalculate(run.testCaseId);
     return run;

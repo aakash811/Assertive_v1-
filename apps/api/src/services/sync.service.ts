@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { Prisma } from "@prisma/client";
-import { historyRepository } from "../repositories/history.repository";
+import { historyService } from "./history.service";
 import type { SyncTestCase } from "@assertive/shared";
 import { generateMetadataDiff } from "../utils/history-diff";
 import { AppError } from "../lib/app-error";
@@ -102,35 +102,24 @@ async function recordHistory(
   dbTestId: string,
 ) {
   if (!previous) {
-    await historyRepository.create({
-      testCaseId: dbTestId,
-      action: "CREATED",
-    });
-
+    await historyService.created(dbTestId);
     return "created";
   }
 
   if (previous.syncState === "STALE") {
-    await historyRepository.create({
-      testCaseId: dbTestId,
-      action: "RESTORED",
-    });
-
+    await historyService.restored(dbTestId);
     return "restored";
   }
 
   const changes = generateMetadataDiff(previous, current);
 
   if (Object.keys(changes).length > 0) {
-    await historyRepository.create({
-      testCaseId: dbTestId,
-      action: "UPDATED",
+    await historyService.updated(
+      dbTestId,
       changes,
-    });
-
+    );
     return "updated";
   }
-
   return "unchanged";
 }
 
@@ -158,11 +147,7 @@ async function markStaleTests(
       },
     });
 
-    await historyRepository.create({
-      testCaseId: test.id,
-      action: "STALE",
-    });
-
+    await historyService.stale(test.id);
     stale++;
   }
 
