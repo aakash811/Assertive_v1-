@@ -69,10 +69,12 @@ async function syncTags(
   });
 
   for (const tagName of tags) {
-    let tag = await prisma.tag.findFirst({
+   let tag = await prisma.tag.findUnique({
       where: {
-        projectId,
-        name: tagName,
+        projectId_name: {
+          projectId,
+          name: tagName,
+        },
       },
     });
 
@@ -186,8 +188,11 @@ export const syncService = {
 
     for (const test of testCases) {
       const previous = existingMap.get(test.externalId);
-      const testCaseWhereUnique = {
-        externalId: test.externalId,
+      const testCaseWhereUnique: Prisma.TestCaseWhereUniqueInput = {
+        projectId_externalId: {
+          projectId,
+          externalId: test.externalId,
+        },
       };
 
       const suiteId = await resolveSuite(

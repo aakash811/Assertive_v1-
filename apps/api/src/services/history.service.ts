@@ -14,10 +14,12 @@ export const historyService = {
     page: number,
     limit: number,
   ) {
-    const testCase = await prisma.testCase.findFirst({
+   const testCase = await prisma.testCase.findUnique({
       where: {
-        projectId,
-        externalId,
+        projectId_externalId: {
+          projectId,
+          externalId,
+        },
       },
     });
 
