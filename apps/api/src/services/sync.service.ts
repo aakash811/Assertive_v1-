@@ -1,4 +1,7 @@
-import { prisma } from "../lib/prisma";
+import { testCaseRepository } from "../repositories/test-case.repository";
+import { testSuiteRepository } from "../repositories/test-suite.repository";
+import { tagRepository } from "../repositories/tag.repository";
+import { testCaseTagRepository } from "../repositories/test-case-tag.repository";
 import { Prisma } from "@prisma/client";
 import { historyService } from "./history.service";
 import type { SyncTestCase } from "@assertive/shared";
@@ -34,27 +37,12 @@ async function resolveSuite(
   projectId: string,
   suiteName?: string,
 ): Promise<string | undefined> {
-  if (!suiteName) {
-    return undefined;
-  }
+  const suite = await testSuiteRepository.findOrCreate(
+    projectId,
+    suiteName,
+  );
 
-  let suite = await prisma.testSuite.findFirst({
-    where: {
-      projectId,
-      name: suiteName,
-    },
-  });
-
-  if (!suite) {
-    suite = await prisma.testSuite.create({
-      data: {
-        projectId,
-        name: suiteName,
-      },
-    });
-  }
-
-  return suite.id;
+  return suite?.id;
 }
 
 async function syncTags(
@@ -62,38 +50,21 @@ async function syncTags(
   projectId: string,
   tags: string[],
 ) {
-  await prisma.testCaseTag.deleteMany({
-    where: {
-      testCaseId,
-    },
-  });
+  const tagIds: string[] = [];
 
   for (const tagName of tags) {
-   let tag = await prisma.tag.findUnique({
-      where: {
-        projectId_name: {
-          projectId,
-          name: tagName,
-        },
-      },
-    });
+    const tag = await tagRepository.findOrCreate(
+      projectId,
+      tagName,
+    );
 
-    if (!tag) {
-      tag = await prisma.tag.create({
-        data: {
-          projectId,
-          name: tagName,
-        },
-      });
-    }
-
-    await prisma.testCaseTag.create({
-      data: {
-        testCaseId,
-        tagId: tag.id,
-      },
-    });
+    tagIds.push(tag.id);
   }
+
+  await testCaseTagRepository.replaceTags(
+    testCaseId,
+    tagIds,
+  );
 }
 
 async function recordHistory(
@@ -124,7 +95,7 @@ async function recordHistory(
 }
 
 async function markStaleTests(
-  existing: Awaited<ReturnType<typeof prisma.testCase.findMany>>,
+  existing: Awaited<ReturnType<typeof testCaseRepository.findByProject>>,
   incomingIds: Set<string>,
 ) {
   let stale = 0;
@@ -138,14 +109,7 @@ async function markStaleTests(
       continue;
     }
 
-    await prisma.testCase.update({
-      where: {
-        id: test.id,
-      },
-      data: {
-        syncState: "STALE",
-      },
-    });
+    await testCaseRepository.markStale(test.id);
 
     await historyService.stale(test.id);
     stale++;
@@ -157,11 +121,7 @@ async function markStaleTests(
 export const syncService = {
   async sync(projectId: string, testCases: SyncTestCase[]) {
     validatePayload(testCases);
-    const existing = await prisma.testCase.findMany({
-      where: {
-        projectId,
-      },
-    });
+   const existing = await testCaseRepository.findByProject(projectId);
 
     const incomingIds = new Set(testCases.map((t) => t.externalId));
     const existingMap = new Map(existing.map((test) => [test.externalId, test]));
@@ -173,47 +133,17 @@ export const syncService = {
 
     for (const test of testCases) {
       const previous = existingMap.get(test.externalId);
-      const testCaseWhereUnique: Prisma.TestCaseWhereUniqueInput = {
-        projectId_externalId: {
-          projectId,
-          externalId: test.externalId,
-        },
-      };
 
       const suiteId = await resolveSuite(
         projectId,
         test.suite,
       );
 
-      const dbTest = await prisma.testCase.upsert({
-        where: testCaseWhereUnique,
-
-        create: {
-          externalId: test.externalId,
-          title: test.title,
-          filePath: test.filePath,
-          owner: test.owner,
-          priority: test.priority,
-          testType: test.testType,
-          customFields: test.customFields,
-          suiteId,
-          projectId,
-          syncState: "SYNCED",
-          lifecycle: "ACTIVE"
-        },
-
-        update: {
-          title: test.title,
-          filePath: test.filePath,
-          owner: test.owner,
-          priority: test.priority,
-          testType: test.testType,
-          customFields: test.customFields,
-          suiteId,
-          syncState: "SYNCED",
-          lifecycle: "ACTIVE"
-        },
-      });
+      const dbTest = await testCaseRepository.upsert(
+        projectId,
+        test,
+        suiteId,
+      );
 
       const action = await recordHistory(
         previous,

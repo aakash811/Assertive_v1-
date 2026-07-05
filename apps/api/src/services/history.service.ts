@@ -1,10 +1,12 @@
 import { Prisma } from "@prisma/client";
 import {
+  ERROR_CODES,
   HISTORY_ACTIONS,
   type HistoryAction,
 } from "@assertive/shared";
 import { historyRepository } from "../repositories/history.repository";
-import { prisma } from "../lib/prisma";
+import { testCaseRepository } from "../repositories/test-case.repository";
+import { AppError } from "../lib/app-error";
 
 export const historyService = {
   create(
@@ -85,17 +87,18 @@ export const historyService = {
     page: number,
     limit: number,
   ) {
-    const testCase = await prisma.testCase.findUnique({
-      where: {
-        projectId_externalId: {
-          projectId,
-          externalId,
-        },
-      },
-    });
+    const testCase =
+      await testCaseRepository.findById(
+        projectId,
+        externalId,
+      );
 
     if (!testCase) {
-      throw new Error("Test case not found");
+      throw new AppError(
+        ERROR_CODES.TEST_CASE_NOT_FOUND,
+        "Test case not found",
+        404,
+      );
     }
 
     return historyRepository.list(testCase.id, page, limit);

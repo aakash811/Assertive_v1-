@@ -66,4 +66,25 @@ export const testRunRepository = {
       },
     });
   },
+
+  deleteAll() {
+    return prisma.testRun.deleteMany({
+      where: {},
+    });
+  },
+
+  findRecentByTestCase(
+    testCaseId: string,
+    limit = 20,
+  ) {
+    return prisma.testRun.findMany({
+      where: {
+        testCaseId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: limit,
+    });
+  }
 };

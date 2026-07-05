@@ -1,16 +1,10 @@
-import { prisma } from "../lib/prisma";
+import { testCaseRepository } from "../repositories/test-case.repository";
+import { testRunRepository } from "../repositories/test-run.repository";
 
 export const flakinessService = {
   async recalculate(testCaseId: string) {
-    const runs = await prisma.testRun.findMany({
-      where: {
-        testCaseId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 20,
-    });
+    const runs =
+      await testRunRepository.findRecentByTestCase(testCaseId);
 
     if (runs.length < 2) {
       return;
@@ -26,14 +20,9 @@ export const flakinessService = {
 
     const score = transitions / (runs.length - 1);
 
-    await prisma.testCase.update({
-      where: {
-        id: testCaseId,
-      },
-      data: {
-        flakyScore: score,
-        isFlaky: score >= 0.3,
-      },
-    });
+    await testCaseRepository.updateFlakiness(
+      testCaseId,
+      score,
+    );
   },
 };

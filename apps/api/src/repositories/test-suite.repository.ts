@@ -1,48 +1,30 @@
 import { prisma } from "../lib/prisma";
 
 export const testSuiteRepository = {
-  create(data: { name: string; projectId: string; parentId?: string }) {
-    return prisma.testSuite.create({
-      data,
-    });
-  },
+  async findOrCreate(
+    projectId: string,
+    name?: string,
+  ) {
+    if (!name) {
+      return undefined;
+    }
 
-  findMany(projectId: string) {
-    return prisma.testSuite.findMany({
+    let suite = await prisma.testSuite.findFirst({
       where: {
         projectId,
-      },
-      include: {
-        children: true,
+        name,
       },
     });
-  },
 
-  assignTestCase(suiteId: string, testCaseId: string) {
-    return prisma.testCase.update({
-      where: {
-        id: testCaseId,
-      },
-      data: {
-        suiteId,
-      },
-    });
-  },
+    if (!suite) {
+      suite = await prisma.testSuite.create({
+        data: {
+          projectId,
+          name,
+        },
+      });
+    }
 
-  update(id: string, data: { name?: string; parentId?: string | null }) {
-    return prisma.testSuite.update({
-      where: {
-        id,
-      },
-      data,
-    });
-  },
-
-  delete(id: string) {
-    return prisma.testSuite.delete({
-      where: {
-        id,
-      },
-    });
+    return suite;
   },
 };
