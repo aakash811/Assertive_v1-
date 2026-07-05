@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 import { runBatchRepository } from "../repositories/run-batch.repository";
 import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
@@ -6,9 +6,7 @@ import {
   BatchUploadResult,
   CreateRunBatchDto,
 } from "../validators/run-batch.validator";
-import { testRunService } from "./test-run.service";
-import { TestStatus } from "@prisma/client";
-import { testCaseRepository } from "../repositories/test-case.repository";
+import { executionEngineService } from "./execution-engine.service";
 
 export const runBatchService = {
   create(projectId: string, data: CreateRunBatchDto) {
@@ -18,16 +16,13 @@ export const runBatchService = {
     });
   },
 
-  list(
-    projectId: string,
-    filters: {
-      page: number;
-      limit: number;
-      q?: string;
-      environment?: string;
-      triggeredBy?: string;
-    },
-  ) {
+  list(projectId: string, filters: {
+    page: number;
+    limit: number;
+    q?: string;
+    environment?: string;
+    triggeredBy?: string;
+  }) {
     return runBatchRepository.findMany(projectId, filters);
   },
 
@@ -40,38 +35,43 @@ export const runBatchService = {
     projectId: string,
     results: BatchUploadResult[],
   ) {
-    let uploaded = 0;
-    for (const result of results) {
-      // Reporter only uploads execution data.
-      // Test inventory must already exist via Sync.
-      const testCase = await testCaseRepository.findByExternalId(
-        result.externalId, 
-        projectId 
-      );
-      if (!testCase) {
-        throw new AppError(
-          ERROR_CODES.TEST_CASE_NOT_FOUND,
-          `Unknown test '${result.externalId}'. Run 'assertive sync' first.`,
-          404,
-        );
-      }
-
-      const testRunData = {
-        testCaseId: testCase.id,
-        runBatchId: batchId,
-        status: result.status as TestStatus,
-        durationMs: result.durationMs,
-        errorMessage: result.errorMessage,
-        traceUrl: result.traceUrl,
+    if (results.length === 0) {
+      return {
+        uploaded: 0,
       };
-
-      await testRunService.create({
-        ...testRunData,
-      });
-      uploaded++;
     }
-    return {
-      uploaded,
-    };
+
+    const batch = await runBatchRepository.findUploadState(
+      batchId,
+      projectId,
+    );
+
+    if (!batch) {
+      throw new AppError(
+        ERROR_CODES.RUN_BATCH_NOT_FOUND,
+        "Run batch not found",
+        404,
+      );
+    }
+
+    if (batch.uploadCompleted) {
+      return {
+        uploaded: 0,
+      };
+    }
+
+    return prisma.$transaction(async () => {
+      const uploaded = await executionEngineService.execute(
+        batchId,
+        projectId,
+        results,
+      );
+
+      await runBatchRepository.markUploaded(batchId);
+
+      return {
+        uploaded,
+      };
+    });
   },
 };

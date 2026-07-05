@@ -8,6 +8,12 @@ export const testRunRepository = {
     });
   },
 
+  createMany(data: Prisma.TestRunCreateManyInput[]) {
+    return prisma.testRun.createMany({
+      data,
+    });
+  },
+
   async findMany(
     projectId: string,
     page: number,

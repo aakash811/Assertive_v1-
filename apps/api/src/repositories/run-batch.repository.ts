@@ -101,4 +101,52 @@ export const runBatchRepository = {
       },
     });
   },
+
+  findUploadState(
+    id: string,
+    projectId: string,
+  ) {
+    return prisma.runBatch.findFirst({
+      where: {
+        id,
+        projectId,
+      },
+      select: {
+        id: true,
+        uploadCompleted: true,
+      },
+    });
+  },
+
+  updateCounters(
+    id: string,
+    counts: {
+      total: number;
+      passed: number;
+      failed: number;
+      skipped: number;
+    },
+  ) {
+    return prisma.runBatch.update({
+      where: { id },
+      data: {
+        totalCount: { increment: counts.total },
+        passedCount: { increment: counts.passed },
+        failedCount: { increment: counts.failed },
+        skippedCount: { increment: counts.skipped },
+      },
+    });
+  },
+
+  markUploaded(id: string) {
+    return prisma.runBatch.update({
+      where: {
+        id,
+      },
+      data: {
+        uploadCompleted: true,
+        uploadedAt: new Date(),
+      },
+    });
+  }
 };
