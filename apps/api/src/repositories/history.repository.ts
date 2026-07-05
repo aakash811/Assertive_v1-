@@ -54,4 +54,10 @@ export const historyRepository = {
       total,
     };
   },
+
+  deleteAll() {
+    return prisma.testCaseHistory.deleteMany({
+      where: {},
+    });
+  },
 };

@@ -1,33 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../lib/prisma", () => ({
-  prisma: {
-    testCase: {
-      findMany: vi.fn(),
-      upsert: vi.fn(),
-      update: vi.fn(),
-    },
-
-    testSuite: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-    },
-
-    tag: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-    },
-
-    testCaseTag: {
-      deleteMany: vi.fn(),
-      create: vi.fn(),
-    },
+vi.mock("../../repositories/test-case.repository", () => ({
+  testCaseRepository: {
+    findByProject: vi.fn(),
+    upsert: vi.fn(),
+    markStale: vi.fn(),
   },
 }));
 
-vi.mock("../../repositories/history.repository", () => ({
-  historyRepository: {
-    create: vi.fn(),
+vi.mock("../../repositories/test-suite.repository", () => ({
+  testSuiteRepository: {
+    findOrCreate: vi.fn(),
+  },
+}));
+
+vi.mock("../../repositories/tag.repository", () => ({
+  tagRepository: {
+    findOrCreate: vi.fn(),
+  },
+}));
+
+vi.mock("../../repositories/test-case-tag.repository", () => ({
+  testCaseTagRepository: {
+    replaceTags: vi.fn(),
+  },
+}));
+
+vi.mock("../../services/history.service", () => ({
+  historyService: {
+    created: vi.fn(),
+    updated: vi.fn(),
+    restored: vi.fn(),
+    stale: vi.fn(),
   },
 }));
 
@@ -35,39 +39,35 @@ vi.mock("../../utils/history-diff", () => ({
   generateMetadataDiff: vi.fn(),
 }));
 
-import { prisma } from "../../lib/prisma";
-
-import { historyRepository } from "../../repositories/history.repository";
-
+import { testCaseRepository } from "../../repositories/test-case.repository";
+import { testSuiteRepository } from "../../repositories/test-suite.repository";
+import { tagRepository } from "../../repositories/tag.repository";
+import { testCaseTagRepository } from "../../repositories/test-case-tag.repository";
+import { historyService } from "../../services/history.service";
 import { generateMetadataDiff } from "../../utils/history-diff";
-
 import { syncService } from "../../services/sync.service";
 
 describe("syncService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(prisma.testSuite.findFirst).mockResolvedValue(null as never);
-
-    vi.mocked(prisma.tag.findFirst).mockResolvedValue(null as never);
-
-    vi.mocked(prisma.testSuite.create).mockResolvedValue({
+    vi.mocked(testSuiteRepository.findOrCreate).mockResolvedValue({
       id: "suite-1",
-    } as never);
+    } as any);
 
-    vi.mocked(prisma.tag.create).mockResolvedValue({
+    vi.mocked(tagRepository.findOrCreate).mockResolvedValue({
       id: "tag-1",
-    } as never);
+    } as any);
 
     vi.mocked(generateMetadataDiff).mockReturnValue({});
   });
 
   it("creates new test cases", async () => {
-    vi.mocked(prisma.testCase.findMany).mockResolvedValue([]);
+    vi.mocked(testCaseRepository.findByProject).mockResolvedValue([]);
 
-    vi.mocked(prisma.testCase.upsert).mockResolvedValue({
+    vi.mocked(testCaseRepository.upsert).mockResolvedValue({
       id: "tc-1",
-    } as never);
+    } as any);
 
     const result = await syncService.sync(
       "project-1",
@@ -89,27 +89,21 @@ describe("syncService", () => {
 
     expect(result.created).toBe(1);
 
-    expect(historyRepository.create).toHaveBeenCalledWith({
-      testCaseId: "tc-1",
-
-      action: "CREATED",
-    });
+    expect(historyService.created).toHaveBeenCalledWith("tc-1");
   });
 
   it("updates existing test cases", async () => {
-    vi.mocked(prisma.testCase.findMany).mockResolvedValue([
+    vi.mocked(testCaseRepository.findByProject).mockResolvedValue([
       {
         id: "tc-1",
-
         externalId: "auth.login",
-
         syncState: "SYNCED",
       },
-    ] as never);
+    ] as any);
 
-    vi.mocked(prisma.testCase.upsert).mockResolvedValue({
+    vi.mocked(testCaseRepository.upsert).mockResolvedValue({
       id: "tc-1",
-    } as never);
+    } as any);
 
     vi.mocked(generateMetadataDiff).mockReturnValue({
       title: {},
@@ -135,41 +129,30 @@ describe("syncService", () => {
 
     expect(result.updated).toBe(1);
 
-    expect(historyRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "UPDATED",
-      }),
-    );
+    expect(historyService.updated).toHaveBeenCalled();
   });
 
   it("restores stale tests", async () => {
-    vi.mocked(prisma.testCase.findMany).mockResolvedValue([
+    vi.mocked(testCaseRepository.findByProject).mockResolvedValue([
       {
         id: "tc-1",
-
         externalId: "auth.login",
-
         syncState: "STALE",
       },
-    ] as never);
+    ] as any);
 
-    vi.mocked(prisma.testCase.upsert).mockResolvedValue({
+    vi.mocked(testCaseRepository.upsert).mockResolvedValue({
       id: "tc-1",
-    } as never);
+    } as any);
 
     const result = await syncService.sync(
       "project-1",
-
       [
         {
           externalId: "auth.login",
-
           title: "Login",
-
           filePath: "login.spec.ts",
-
           tags: [],
-
           customFields: {},
         },
       ],
@@ -177,23 +160,17 @@ describe("syncService", () => {
 
     expect(result.restored).toBe(1);
 
-    expect(historyRepository.create).toHaveBeenCalledWith({
-      testCaseId: "tc-1",
-
-      action: "RESTORED",
-    });
+    expect(historyService.restored).toHaveBeenCalledWith("tc-1");
   });
 
   it("marks missing tests as stale", async () => {
-    vi.mocked(prisma.testCase.findMany).mockResolvedValue([
+    vi.mocked(testCaseRepository.findByProject).mockResolvedValue([
       {
         id: "tc-1",
-
         externalId: "old.test",
-
         syncState: "SYNCED",
       },
-    ] as never);
+    ] as any);
 
     const result = await syncService.sync(
       "project-1",
@@ -202,15 +179,7 @@ describe("syncService", () => {
     );
 
     expect(result.stale).toBe(1);
-
-    expect(prisma.testCase.update).toHaveBeenCalledWith({
-      where: {
-        id: "tc-1",
-      },
-
-      data: {
-        syncState: "STALE",
-      },
-    });
+    expect(testCaseRepository.markStale).toHaveBeenCalledWith("tc-1");
+    expect(historyService.stale).toHaveBeenCalledWith("tc-1");
   });
 });

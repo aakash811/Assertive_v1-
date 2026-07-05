@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, TestStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 
 export const runBatchRepository = {
@@ -148,5 +148,40 @@ export const runBatchRepository = {
         uploadedAt: new Date(),
       },
     });
-  }
+  },
+  
+  incrementCounters(
+    id: string,
+    status: TestStatus,
+  ) {
+    const data: Prisma.RunBatchUpdateInput = {
+      totalCount: {
+        increment: 1,
+      },
+    };
+
+    switch (status) {
+      case "PASSED":
+        data.passedCount = {
+          increment: 1,
+        };
+        break;
+
+      case "FAILED":
+        data.failedCount = {
+          increment: 1,
+        };
+        break;
+
+      case "SKIPPED":
+        data.skippedCount = {
+          increment: 1,
+        };
+    }
+
+    return prisma.runBatch.update({
+      where: { id },
+      data,
+    });
+  },
 };

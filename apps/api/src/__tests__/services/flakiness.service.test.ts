@@ -1,18 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../lib/prisma", () => ({
-  prisma: {
-    testRun: {
-      findMany: vi.fn(),
-    },
-
-    testCase: {
-      update: vi.fn(),
-    },
+vi.mock("../../repositories/test-run.repository", () => ({
+  testRunRepository: {
+    findRecentByTestCase: vi.fn(),
   },
 }));
 
-import { prisma } from "../../lib/prisma";
+vi.mock("../../repositories/test-case.repository", () => ({
+  testCaseRepository: {
+    updateFlakiness: vi.fn(),
+  },
+}));
+
+import { testRunRepository } from "../../repositories/test-run.repository";
+import { testCaseRepository } from "../../repositories/test-case.repository";
 import { flakinessService } from "../../services/flakiness.service";
 
 describe("flakinessService", () => {
@@ -21,18 +22,25 @@ describe("flakinessService", () => {
   });
 
   it("does nothing when fewer than 2 runs exist", async () => {
-    vi.mocked(prisma.testRun.findMany).mockResolvedValue([
+    vi.mocked(
+      testRunRepository.findRecentByTestCase,
+    ).mockResolvedValue([
       {
         status: "PASSED",
       },
     ] as any);
 
     await flakinessService.recalculate("tc1");
-    expect(prisma.testCase.update).not.toHaveBeenCalled();
+
+    expect(
+      testCaseRepository.updateFlakiness,
+    ).not.toHaveBeenCalled();
   });
 
   it("marks stable test as not flaky", async () => {
-    vi.mocked(prisma.testRun.findMany).mockResolvedValue([
+    vi.mocked(
+      testRunRepository.findRecentByTestCase,
+    ).mockResolvedValue([
       { status: "PASSED" },
       { status: "PASSED" },
       { status: "PASSED" },
@@ -40,20 +48,18 @@ describe("flakinessService", () => {
 
     await flakinessService.recalculate("tc1");
 
-    expect(prisma.testCase.update).toHaveBeenCalledWith({
-      where: {
-        id: "tc1",
-      },
-
-      data: {
-        flakyScore: 0,
-        isFlaky: false,
-      },
-    });
+    expect(
+      testCaseRepository.updateFlakiness,
+    ).toHaveBeenCalledWith(
+      "tc1",
+      0,
+    );
   });
 
   it("marks unstable test as flaky", async () => {
-    vi.mocked(prisma.testRun.findMany).mockResolvedValue([
+    vi.mocked(
+      testRunRepository.findRecentByTestCase,
+    ).mockResolvedValue([
       { status: "PASSED" },
       { status: "FAILED" },
       { status: "PASSED" },
@@ -61,11 +67,17 @@ describe("flakinessService", () => {
     ] as any);
 
     await flakinessService.recalculate("tc1");
-    expect(prisma.testCase.update).toHaveBeenCalled();
 
-    const call = vi.mocked(prisma.testCase.update).mock.calls[0][0];
-    expect(call.data.isFlaky).toBe(true);
+    expect(
+      testCaseRepository.updateFlakiness,
+    ).toHaveBeenCalled();
 
-    expect(call.data.flakyScore).toBeGreaterThan(0.3);
+    const call =
+      vi.mocked(
+        testCaseRepository.updateFlakiness,
+      ).mock.calls[0];
+
+    expect(call[0]).toBe("tc1");
+    expect(call[1]).toBeGreaterThan(0.3);
   });
 });

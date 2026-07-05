@@ -1,6 +1,8 @@
 import { Prisma, TestStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { historyService } from "./history.service";
+import { AppError } from "../lib/app-error";
+import { ERROR_CODES } from "@assertive/shared";
 
 export const manualOverrideService = {
   async overrideStatus(
@@ -16,7 +18,11 @@ export const manualOverrideService = {
       });
 
       if (!existing) {
-        throw new Error("Test case not found");
+        throw new AppError(
+          ERROR_CODES.TEST_CASE_NOT_FOUND,
+          "Test case not found",
+          404,
+        );
       }
 
       const previousStatus = existing.lastStatus;

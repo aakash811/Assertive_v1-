@@ -1,4 +1,5 @@
 import { prisma } from "@assertive/database";
+import { SyncTestCase } from "@assertive/shared";
 import type { Prisma, TestStatus } from "@prisma/client";
 
 export const testCaseRepository = {
@@ -319,6 +320,101 @@ export const testCaseRepository = {
         lastStatus: status,
         isManualOverride: false,
         overrideComment: null,
+      },
+    });
+  },
+  
+  findByProject(projectId: string) {
+    return prisma.testCase.findMany({
+      where: {
+        projectId,
+      },
+    });
+  },
+
+  upsert(
+    projectId: string,
+    test: SyncTestCase,
+    suiteId?: string,
+  ) {
+    return prisma.testCase.upsert({
+      where: {
+        projectId_externalId: {
+          projectId,
+          externalId: test.externalId,
+        },
+      },
+
+      create: {
+        externalId: test.externalId,
+        title: test.title,
+        filePath: test.filePath,
+        owner: test.owner,
+        priority: test.priority,
+        testType: test.testType,
+        customFields: test.customFields,
+        suiteId,
+        projectId,
+        syncState: "SYNCED",
+        lifecycle: "ACTIVE",
+      },
+
+      update: {
+        title: test.title,
+        filePath: test.filePath,
+        owner: test.owner,
+        priority: test.priority,
+        testType: test.testType,
+        customFields: test.customFields,
+        suiteId,
+        syncState: "SYNCED",
+        lifecycle: "ACTIVE",
+      },
+    });
+  },
+
+  markStale(id: string) {
+    return prisma.testCase.update({
+      where: {
+        id,
+      },
+      data: {
+        syncState: "STALE",
+      },
+    });
+  },
+
+  findRawById(id: string) {
+    return prisma.testCase.findUnique({
+      where: { id },
+    });
+  },
+
+  clearManualOverride(
+    id: string,
+    status: TestStatus,
+  ) {
+    return prisma.testCase.update({
+      where: { id },
+      data: {
+        lastStatus: status,
+        isManualOverride: false,
+        overrideComment: null,
+      },
+    });
+  },
+
+  updateFlakiness(
+    id: string,
+    score: number,
+  ) {
+    return prisma.testCase.update({
+      where: {
+        id,
+      },
+      data: {
+        flakyScore: score,
+        isFlaky: score >= 0.3,
       },
     });
   },

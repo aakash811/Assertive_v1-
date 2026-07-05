@@ -1,7 +1,11 @@
 import { prisma } from "../lib/prisma";
 
 export const tagRepository = {
-  create(data: { projectId: string; name: string; color?: string }) {
+  create(data: {
+    projectId: string;
+    name: string;
+    color?: string;
+  }) {
     return prisma.tag.create({
       data,
     });
@@ -44,5 +48,30 @@ export const tagRepository = {
         id,
       },
     });
+  },
+
+  async findOrCreate(
+    projectId: string,
+    name: string,
+  ) {
+    let tag = await prisma.tag.findUnique({
+      where: {
+        projectId_name: {
+          projectId,
+          name,
+        },
+      },
+    });
+
+    if (!tag) {
+      tag = await prisma.tag.create({
+        data: {
+          projectId,
+          name,
+        },
+      });
+    }
+
+    return tag;
   },
 };

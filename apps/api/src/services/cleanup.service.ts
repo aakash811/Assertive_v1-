@@ -1,14 +1,11 @@
-import { prisma } from "../lib/prisma";
+import { historyRepository } from "../repositories/history.repository";
+import { testRunRepository } from "../repositories/test-run.repository";
 
 export const cleanupService = {
   async run() {
-    const runs = await prisma.testRun.deleteMany({
-      where: {},
-    });
+    const runs = await testRunRepository.deleteAll();
 
-    const history = await prisma.testCaseHistory.deleteMany({
-      where: {},
-    });
+    const history = await historyRepository.deleteAll();
 
     return {
       runs: runs.count,
