@@ -12,6 +12,8 @@ export const HISTORY_ACTIONS = {
   MANUAL_OVERRIDE: "MANUAL_OVERRIDE",
 
   MANUAL_OVERRIDE_CLEARED: "MANUAL_OVERRIDE_CLEARED",
+
+  ARCHIVED: "ARCHIVED",
 } as const;
 
 export type HistoryAction =

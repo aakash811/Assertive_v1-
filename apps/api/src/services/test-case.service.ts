@@ -1,5 +1,6 @@
 import { testCaseRepository } from "../repositories/test-case.repository";
 import type { TestStatus } from "@prisma/client";
+import { historyService } from "./history.service";
 
 export const testCaseService = {
   async create(
@@ -32,14 +33,15 @@ export const testCaseService = {
       flaky?: boolean;
       suite?: string;
       syncState?: "SYNCED" | "STALE";
+      lifecycle?: "ACTIVE" | "ARCHIVED";
       testType?: string;
     },
   ) {
     return testCaseRepository.findMany(projectId, filters);
   },
 
-  get(id: string, projectId: string) {
-    return testCaseRepository.findById(id, projectId);
+  get(id: string, projectId: string, includeArchived = false) {
+    return testCaseRepository.findById(id, projectId, includeArchived);
   },
 
   update(
@@ -53,11 +55,19 @@ export const testCaseService = {
     return testCaseRepository.update(id, data, projectId);
   },
 
-  delete(id: string, projectId: string) {
-    return testCaseRepository.delete(id, projectId);
+  async archive(id: string, projectId: string) {
+   const testCase = await testCaseRepository.archive(id, projectId);
+   await historyService.archived(testCase.id);
+   return testCase;
   },
 
-  findByExternalId(externalId: string, projectId: string) {
-    return testCaseRepository.findByExternalId(externalId, projectId);
+  async restore(id: string, projectId: string) {
+    const testCase = await testCaseRepository.restore(id, projectId);
+    await historyService.restored(testCase.id);
+    return testCase;
+  },
+
+  findByExternalId(externalId: string, projectId: string, includeArchived = false) {
+    return testCaseRepository.findByExternalId(externalId, projectId, includeArchived);
   },
 };

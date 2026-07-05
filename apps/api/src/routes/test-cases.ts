@@ -29,6 +29,7 @@ testCaseRoutes.get("/", async (c) => {
   const page = Number(c.req.query("page")) || 1;
   const limit = Number(c.req.query("limit")) || 20;
   const q = c.req.query("q");
+  
   const rawStatus = c.req.query("status");
   const status =
     rawStatus && Object.values(TestStatus).includes(rawStatus as TestStatus)
@@ -40,6 +41,13 @@ testCaseRoutes.get("/", async (c) => {
     rawSyncState && Object.values(SyncState).includes(rawSyncState as SyncState)
       ? (rawSyncState as SyncState)
       : undefined;
+
+  const rawLifecycle = c.req.query("lifecycle");
+  const lifecycle =
+    rawLifecycle === "ACTIVE" || rawLifecycle === "ARCHIVED"
+      ? rawLifecycle
+      : undefined;
+  
   const owner = c.req.query("owner");
   const tag = c.req.query("tag");
   const flaky = c.req.query("flaky");
@@ -56,6 +64,7 @@ testCaseRoutes.get("/", async (c) => {
     flaky: flaky === undefined ? undefined : flaky === "true",
     suite,
     syncState,
+    lifecycle,
     testType,
   });
 
@@ -91,7 +100,14 @@ testCaseRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   const projectId = c.get("projectId");
 
-  const testCase = await testCaseService.get(id, projectId);
+  const includeArchived =
+  c.req.query("includeArchived") === "true";
+
+  const testCase = await testCaseService.get(
+    id,
+    projectId,
+    includeArchived,
+  );
 
   if (!testCase) {
     throw new AppError(
@@ -114,11 +130,20 @@ testCaseRoutes.patch("/:id", async (c) => {
   return c.json(ok(updated));
 });
 
-testCaseRoutes.delete("/:id", async (c) => {
+testCaseRoutes.patch("/:id/archive", async (c) => {
   const id = c.req.param("id");
   const projectId = c.get("projectId");
 
-  await testCaseService.delete(id, projectId);
+  const archived = await testCaseService.archive(id, projectId);
 
-  return c.json(ok({ success: true }));
+  return c.json(ok(archived));
+});
+
+testCaseRoutes.patch("/:id/restore", async (c) => {
+  const id = c.req.param("id");
+  const projectId = c.get("projectId");
+
+  const restored = await testCaseService.restore(id, projectId);
+
+  return c.json(ok(restored));
 });
