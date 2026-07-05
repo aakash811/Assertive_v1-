@@ -285,4 +285,41 @@ export const testCaseRepository = {
       where,
     });
   },
+
+  findByExternalIds(
+    externalIds: string[],
+    projectId: string,
+    includeArchived = false,
+  ) {
+    const where: Prisma.TestCaseWhereInput = {
+      projectId,
+      externalId: {
+        in: externalIds,
+      },
+    };
+
+    if (!includeArchived) {
+      where.lifecycle = "ACTIVE";
+    }
+
+    return prisma.testCase.findMany({
+      where,
+    });
+  },
+
+  updateExecutionState(
+    id: string,
+    status: TestStatus,
+  ) {
+    return prisma.testCase.update({
+      where: {
+        id,
+      },
+      data: {
+        lastStatus: status,
+        isManualOverride: false,
+        overrideComment: null,
+      },
+    });
+  },
 };

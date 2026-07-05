@@ -15,6 +15,20 @@ export const historyRepository = {
     });
   },
 
+  createMany(
+    data: {
+      testCaseId: string;
+      action: HistoryAction;
+      changes?: Prisma.InputJsonValue;
+      comment?: string;
+      changedBy?: string;
+    }[],
+  ) {
+    return prisma.testCaseHistory.createMany({
+      data,
+    });
+  },
+
   async list(testCaseId: string, page: number, limit: number) {
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([

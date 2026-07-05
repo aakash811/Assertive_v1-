@@ -245,6 +245,10 @@ model RunBatch {
 
   runs TestRun[]
 
+  uploadCompleted Boolean @default(false)
+
+  uploadedAt DateTime?
+
   createdAt DateTime @default(now())
 
   @@index([projectId])

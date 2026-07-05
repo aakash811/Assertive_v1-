@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../lib/prisma", () => ({
   prisma: {
+    $transaction: vi.fn(async (fn) => fn()),
     testCase: {
       findFirst: vi.fn(),
     },
@@ -13,26 +14,21 @@ vi.mock("../../repositories/run-batch.repository", () => ({
     create: vi.fn(),
     findMany: vi.fn(),
     findById: vi.fn(),
+    findUploadState: vi.fn(),
+    markUploaded: vi.fn(),
   },
 }));
 
-vi.mock("../../services/test-run.service", () => ({
-  testRunService: {
-    create: vi.fn(),
+vi.mock("../../services/execution-engine.service", () => ({
+  executionEngineService: {
+    execute: vi.fn(),
   },
 }));
 
-vi.mock("../../repositories/test-case.repository", () => ({
-  testCaseRepository: {
-    findByExternalId: vi.fn(),
-  },
-}));
-
-import { prisma } from "../../lib/prisma";
 import { runBatchRepository } from "../../repositories/run-batch.repository";
-import { testCaseRepository } from "../../repositories/test-case.repository";
-import { testRunService } from "../../services/test-run.service";
 import { runBatchService } from "../../services/run-batch.service";
+import { executionEngineService } from "../../services/execution-engine.service";
+
 import { AppError } from "../../lib/app-error";
 
 describe("runBatchService", () => {
@@ -77,14 +73,16 @@ describe("runBatchService", () => {
   });
 
   it("uploads results", async () => {
-    vi.mocked(testCaseRepository.findByExternalId).mockResolvedValue({
-      id: "tc-1",
+    vi.mocked(runBatchRepository.findUploadState).mockResolvedValue({
+      id: "batch-1",
+      uploadCompleted: false,
     } as any);
+
+    vi.mocked(executionEngineService.execute).mockResolvedValue(1);
 
     await runBatchService.upload(
       "batch-1",
       "project-1",
-
       [
         {
           externalId: "auth.login",
@@ -94,18 +92,35 @@ describe("runBatchService", () => {
       ],
     );
 
-    expect(testRunService.create).toHaveBeenCalledWith({
-      testCaseId: "tc-1",
-      runBatchId: "batch-1",
-      status: "PASSED",
-      durationMs: 100,
-      errorMessage: undefined,
-      traceUrl: undefined,
-    });
+    expect(executionEngineService.execute).toHaveBeenCalledWith(
+      "batch-1",
+      "project-1",
+      [
+        {
+          externalId: "auth.login",
+          status: "PASSED",
+          durationMs: 100,
+        },
+      ],
+    );
+
+    expect(runBatchRepository.markUploaded).toHaveBeenCalledWith("batch-1");
   });
 
-  it("throws for unknown test case", async () => {
-    vi.mocked(testCaseRepository.findByExternalId).mockResolvedValue(null);
+  it("throws for execution failure", async () => {
+    vi.mocked(runBatchRepository.findUploadState).mockResolvedValue({
+      id: "batch-1",
+      uploadCompleted: false,
+    } as any);
+
+    vi.mocked(executionEngineService.execute).mockRejectedValue(
+      new AppError(
+        "TEST_CASE_NOT_FOUND",
+        "Unknown test",
+        404,
+      ),
+    );
+
     await expect(
       runBatchService.upload(
         "batch-1",
@@ -118,5 +133,24 @@ describe("runBatchService", () => {
         ],
       ),
     ).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("returns immediately when upload is already completed", async () => {
+    vi.mocked(runBatchRepository.findUploadState).mockResolvedValue({
+      id: "batch-1",
+      uploadCompleted: true,
+    } as any);
+
+    const result = await runBatchService.upload(
+      "batch-1",
+      "project-1",
+      [],
+    );
+
+    expect(result).toEqual({
+      uploaded: 0,
+    });
+
+    expect(executionEngineService.execute).not.toHaveBeenCalled();
   });
 });

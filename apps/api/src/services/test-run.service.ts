@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, TestStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { testRunRepository } from "../repositories/test-run.repository";
 import { flakinessService } from "./flakiness.service";
