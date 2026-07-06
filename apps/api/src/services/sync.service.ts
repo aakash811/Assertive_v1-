@@ -8,6 +8,7 @@ import type { SyncTestCase } from "@assertive/shared";
 import { generateMetadataDiff } from "../utils/history-diff";
 import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
+import { syncLockService } from "./sync-lock.service";
 
 function validatePayload(testCases: SyncTestCase[]) {
   const ids = new Set<string>();
@@ -35,33 +36,54 @@ function validatePayload(testCases: SyncTestCase[]) {
 
 async function resolveSuite(
   projectId: string,
+  suiteCache: Map<string, string>,
   suiteName?: string,
-): Promise<string | undefined> {
-  const suite = await testSuiteRepository.findOrCreate(
-    projectId,
-    suiteName,
-  );
+): Promise<string |undefined> {
+  if (!suiteName) {
+    return undefined;
+  }
 
-  return suite?.id;
+  const cached = suiteCache.get(suiteName);
+
+  if (cached) {
+    return cached;
+  }
+
+  const suite = await testSuiteRepository.create({
+    projectId,
+    name: suiteName,
+  });
+
+  suiteCache.set(suite.name, suite.id);
+
+  return suite.id;
 }
 
 async function syncTags(
   testCaseId: string,
   projectId: string,
   tags: string[],
+  tagCache: Map<string, string>,
 ) {
   const tagIds: string[] = [];
 
   for (const tagName of tags) {
-    const tag = await tagRepository.findOrCreate(
-      projectId,
-      tagName,
-    );
+    let tagId = tagCache.get(tagName);
 
-    tagIds.push(tag.id);
+    if (!tagId) {
+      const tag = await tagRepository.create({
+        projectId,
+        name: tagName,
+      });
+
+      tagId = tag.id;
+      tagCache.set(tag.name, tag.id);
+    }
+
+    tagIds.push(tagId);
   }
 
-  await testCaseTagRepository.replaceTags(
+  await testCaseTagRepository.syncTags(
     testCaseId,
     tagIds,
   );
@@ -119,70 +141,108 @@ async function markStaleTests(
 }
 
 export const syncService = {
-  async sync(projectId: string, testCases: SyncTestCase[]) {
-    validatePayload(testCases);
-   const existing = await testCaseRepository.findByProject(projectId);
-
-    const incomingIds = new Set(testCases.map((t) => t.externalId));
-    const existingMap = new Map(existing.map((test) => [test.externalId, test]));
-
-    let created = 0;
-    let updated = 0;
-    let restored = 0;
-    let stale = 0;
-
-    for (const test of testCases) {
-      const previous = existingMap.get(test.externalId);
-
-      const suiteId = await resolveSuite(
-        projectId,
-        test.suite,
-      );
-
-      const dbTest = await testCaseRepository.upsert(
-        projectId,
-        test,
-        suiteId,
-      );
-
-      const action = await recordHistory(
-        previous,
-        test,
-        dbTest.id,
-      );
-
-      switch (action) {
-        case "created":
-          created++;
-          break;
-
-        case "updated":
-          updated++;
-          break;
-
-        case "restored":
-          restored++;
-          break;
-      }
-
-      await syncTags(
-        dbTest.id,
-        projectId,
-        test.tags,
+  async sync(
+    projectId: string,
+    testCases: SyncTestCase[],
+  ) {
+    if (!syncLockService.acquire(projectId)) {
+      throw new AppError(
+        ERROR_CODES.CONFLICT,
+        "A Sync is already running for this project.",
+        409,
       );
     }
+    
+    try{
+      return testCaseRepository.withTransaction(async () => {
+        validatePayload(testCases);
 
-    stale = await markStaleTests(
-      existing,
-      incomingIds,
-    );
+        const existing =
+          await testCaseRepository.findByProject(projectId);
+        
+        const suites =
+          await testSuiteRepository.findByProject(projectId);
+        const suiteCache = new Map(
+          suites.map((suite) => [suite.name, suite.id]),
+        );
 
-    return {
-      synced: testCases.length,
-      created,
-      updated,
-      restored,
-      stale,
-    };
+        const tags =
+          await tagRepository.findByProject(projectId);
+        const tagCache = new Map(
+          tags.map((tag) => [tag.name, tag.id]),
+        );
+
+        const incomingIds = new Set(
+          testCases.map((t) => t.externalId),
+        );
+
+        const existingMap = new Map(
+          existing.map((test) => [test.externalId, test]),
+        );
+
+        let created = 0;
+        let updated = 0;
+        let restored = 0;
+        let stale = 0;
+
+        for (const test of testCases) {
+          const previous = existingMap.get(test.externalId);
+
+          const suiteId = await resolveSuite(
+            projectId,
+            suiteCache,
+            test.suite,
+          );
+
+          const dbTest = await testCaseRepository.upsert(
+            projectId,
+            test,
+            suiteId,
+          );
+
+          const action = await recordHistory(
+            previous,
+            test,
+            dbTest.id,
+          );
+
+          switch (action) {
+            case "created":
+              created++;
+              break;
+
+            case "updated":
+              updated++;
+              break;
+
+            case "restored":
+              restored++;
+              break;
+          }
+
+          await syncTags(
+            dbTest.id,
+            projectId,
+            test.tags,
+            tagCache,
+          );
+        }
+
+        stale = await markStaleTests(
+          existing,
+          incomingIds,
+        );
+
+        return {
+          synced: testCases.length,
+          created,
+          updated,
+          restored,
+          stale,
+        };
+      });
+    } finally {
+      syncLockService.release(projectId);
+    }
   },
 };

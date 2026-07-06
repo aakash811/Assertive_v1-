@@ -10,6 +10,7 @@ import { loadAssertiveConfig } from "@assertive/shared";
 import { findProjectRoot } from "../utils/find-project-root.js";
 import { readCache, writeCache, hashFile } from "../utils/sync-cache.js";
 
+
 export const syncCommand = new Command("sync")
   .description("Sync tests with Assertive")
   .option("--dry-run", "Preview changes without syncing")
@@ -34,12 +35,21 @@ export const syncCommand = new Command("sync")
 
       console.log("Discovering tests...");
       const files = await scanFiles();
+      const activeFiles = new Set(
+        files.map((f) => f.absolutePath),
+      );
       console.log(`Found ${files.length} test files`);
 
       const changedFiles = getChangedFiles(files);
       console.log(`Files changed: ${changedFiles.length}`);
 
       const testCases: SyncTestCase[] = [];
+      const parserErrors: {
+        file: string;
+        test?: string;
+        message: string;
+      }[] = [];
+
       const cache = readCache();
 
       for (const file of files) {
@@ -48,19 +58,42 @@ export const syncCommand = new Command("sync")
         if (isChanged) {
           const parsed = await parseTestFile(file.absolutePath);
 
-          testCases.push(...parsed);
+          testCases.push(...parsed.tests);
+
+          parserErrors.push(...parsed.errors);
 
           cache[file.absolutePath] = {
             hash: hashFile(file.absolutePath),
-
-            tests: parsed,
+            tests: parsed.tests,
           };
         } else {
           testCases.push(...(cache[file.absolutePath]?.tests ?? []));
         }
       }
 
+      for (const cachedFile of Object.keys(cache)) {
+        if (!activeFiles.has(cachedFile)) {
+          delete cache[cachedFile];
+        }
+      }
+
       writeCache(cache);
+      if (parserErrors.length) {
+        console.log("");
+        console.log(chalk.yellow("Parser Errors"));
+        console.log("================");
+
+        for (const error of parserErrors) {
+          console.log(chalk.red(`✗ ${error.file}`));
+
+          if (error.test) {
+            console.log(`  Test: ${error.test}`);
+          }
+
+          console.log(`  ${error.message}`);
+          console.log("");
+        }
+      }
 
       const duplicates = findDuplicates(testCases);
 
@@ -105,6 +138,14 @@ export const syncCommand = new Command("sync")
       console.log(chalk.magenta(`⟳ ${result.restored} restored`));
       console.log(chalk.red(`⚠ ${result.stale} stale`));
       console.log("");
+
+      if (parserErrors.length) {
+        console.log(
+          chalk.yellow(
+            `⚠ ${parserErrors.length} parser error(s) encountered`,
+          ),
+        );
+      }
     } catch (error) {
       console.error(error instanceof Error ? error.message : error);
     }

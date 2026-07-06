@@ -22,6 +22,14 @@ export const tagRepository = {
     });
   },
 
+  findByProject(projectId: string) {
+    return prisma.tag.findMany({
+      where: {
+        projectId,
+      },
+    });
+  },
+
   assign(testCaseId: string, tagId: string) {
     return prisma.testCaseTag.create({
       data: {
