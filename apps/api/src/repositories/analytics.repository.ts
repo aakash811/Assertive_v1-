@@ -107,14 +107,14 @@ export const analyticsRepository = {
   },
 
   async getStatusDistribution(projectId: string) {
-    const runs = await prisma.testRun.findMany({
+    const grouped = await prisma.testRun.groupBy({
+      by: ["status"],
       where: {
         testCase: {
           projectId,
         },
       },
-
-      select: {
+      _count: {
         status: true,
       },
     });
@@ -127,8 +127,8 @@ export const analyticsRepository = {
       UNKNOWN: 0,
     };
 
-    for (const run of runs) {
-      counts[run.status]++;
+    for (const row of grouped) {
+      counts[row.status] = row._count.status;
     }
 
     return Object.entries(counts).map(([name, value]) => ({

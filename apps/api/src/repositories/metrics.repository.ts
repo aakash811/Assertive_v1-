@@ -50,4 +50,34 @@ export const metricsRepository = {
       recentBatches,
     };
   },
+
+  async getTrend(projectId: string, days = 30) {
+    const from = new Date();
+    from.setDate(from.getDate() - days);
+
+    const batches = await prisma.runBatch.findMany({
+      where: {
+        projectId,
+        createdAt: {
+          gte: from,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      select: {
+        createdAt: true,
+        totalCount: true,
+        passedCount: true,
+      },
+    });
+
+    return batches.map((batch) => ({
+      createdAt: batch.createdAt,
+      passRate:
+        batch.totalCount === 0
+          ? 0
+          : Number(((batch.passedCount / batch.totalCount) * 100).toFixed(2)),
+    }));
+  },
 };

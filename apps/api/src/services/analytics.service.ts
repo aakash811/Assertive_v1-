@@ -1,22 +1,32 @@
 import { analyticsRepository } from "../repositories/analytics.repository";
-import { insightsRepository } from "../repositories/insights.repository";
+import {
+  insightsRepository,
+  type TimeWindow,
+} from "../repositories/insights.repository";
+import type { SummaryMetrics } from "@assertive/shared";
 
 export const analyticsService = {
-  async getSummary(projectId: string) {
-    const summary = await insightsRepository.getSummary(projectId);
+  async getSummary(projectId: string, window?: TimeWindow) {
+    const summary = await insightsRepository.getSummary(projectId, window);
 
-    return {
-      ...summary,
-
+    const summaryMetrics: SummaryMetrics = {
+      totalTests: summary.totalTests,
+      totalRuns: summary.totalRuns,
+      passedRuns: summary.passedRuns,
+      failedRuns: summary.failedRuns,
+      staleRuns: summary.staleRuns,
       passRate:
         summary.totalRuns === 0
           ? 0
           : Number(((summary.passedRuns / summary.totalRuns) * 100).toFixed(2)),
-
       failureRate:
         summary.totalRuns === 0
           ? 0
           : Number(((summary.failedRuns / summary.totalRuns) * 100).toFixed(2)),
+    };
+
+    return {
+      summary: summaryMetrics,
     };
   },
 
