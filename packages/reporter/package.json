@@ -6,7 +6,8 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -16,7 +17,9 @@
   "types": "./src/index.ts",
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "@types/node": "^25.9.3"
+    "@types/node": "^25.9.3",
+    "vitest": "^4",
+    "tsx": "^4"
   },
   "dependencies": {
     "@assertive/helper": "workspace:^"

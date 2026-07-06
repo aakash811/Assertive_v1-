@@ -87,7 +87,7 @@ export class AssertiveReporter implements Reporter {
         );
       }
     });
-    
+
     try {
       const ciContext = getCIContext();
       const batch = await this.retry(() =>
@@ -154,16 +154,6 @@ export class AssertiveReporter implements Reporter {
     if (this.offlineMode) {
       this.results.push(runResult);
       return;
-    }
-
-   const testCase = await this.client.getTestCaseByExternalId(
-      runResult.externalId,
-    );
-
-    if (!testCase) {
-      throw new Error(
-        `Unknown TestCase '${runResult.externalId}'. Run 'assertive sync' first.`,
-      );
     }
 
     this.results.push(runResult);

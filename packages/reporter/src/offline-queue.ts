@@ -2,9 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { BatchResult } from "./types";
 
-const QUEUE_FILE = path.join(process.cwd(), ".assertive-queue.json");
-const TEMP_QUEUE_FILE = `${QUEUE_FILE}.tmp`;
-const LOCK_FILE = `${QUEUE_FILE}.lock`;
+function queueFile() {
+  return path.join(process.cwd(), ".assertive-queue.json");
+}
+
+function tempQueueFile() {
+  return `${queueFile()}.tmp`;
+}
+
+function lockFile() {
+  return `${queueFile()}.lock`;
+}
 const LOCK_TIMEOUT_MS = 30_000;
 
 function sleep(ms: number) {
@@ -16,7 +24,7 @@ async function acquireLock() {
 
   while (true) {
     try {
-      const fd = fs.openSync(LOCK_FILE, "wx");
+      const fd = fs.openSync(lockFile(), "wx");
       fs.closeSync(fd);
       return;
     } catch {
@@ -30,8 +38,8 @@ async function acquireLock() {
 }
 
 function releaseLock() {
-  if (fs.existsSync(LOCK_FILE)) {
-    fs.unlinkSync(LOCK_FILE);
+  if (fs.existsSync(lockFile())) {
+    fs.unlinkSync(lockFile());
   }
 }
 
@@ -45,7 +53,7 @@ function isBatchResult(value: unknown): value is BatchResult {
   return (
     typeof result.externalId === "string" &&
     typeof result.status === "string" &&
-    typeof result.durationMs === "number"
+    (result.durationMs === undefined || typeof result.durationMs === "number")
   );
 }
 
@@ -74,13 +82,13 @@ export interface QueueItem {
 }
 
 export function loadQueue(): QueueItem[] {
-  if (!fs.existsSync(QUEUE_FILE)) {
+  if (!fs.existsSync(queueFile())) {
     return [];
   }
 
   try {
     const parsed = JSON.parse(
-      fs.readFileSync(QUEUE_FILE, "utf-8"),
+      fs.readFileSync(queueFile(), "utf-8")
     );
 
     if (!Array.isArray(parsed)) {
@@ -95,12 +103,15 @@ export function loadQueue(): QueueItem[] {
 
 export function saveQueue(items: QueueItem[]) {
   fs.writeFileSync(
-    TEMP_QUEUE_FILE,
+    tempQueueFile(),
     JSON.stringify(items, null, 2),
     "utf-8",
   );
 
-  fs.renameSync(TEMP_QUEUE_FILE, QUEUE_FILE);
+  fs.renameSync(
+    tempQueueFile(),
+    queueFile(),
+  );
 }
 
 export function enqueue(item: QueueItem) {
