@@ -2,7 +2,7 @@ import os from "node:os";
 import { AssertiveClient } from "./client";
 import { BatchResult } from "./types";
 import { resolveConfig, type ReporterConfig } from "./config";
-import { enqueue, loadQueue, saveQueue } from "./offline-queue";
+import { enqueue, loadQueue, saveQueue, withQueueLock } from "./offline-queue";
 import { getCIContext } from "./context";
 
 import {
@@ -53,38 +53,41 @@ export class AssertiveReporter implements Reporter {
   }
 
   async onBegin(_config: FullConfig, _suite: Suite) {
-    const queue = loadQueue();
-    if (queue.length) {
-      console.log(
-        `[Assertive] Replaying ${queue.length} queued upload(s)...`,
-      );
-    }
-    const remaining = [];
+    await withQueueLock(async () => {
+      const queue = loadQueue();
 
-    for (const item of queue) {
-      try {
-        const batch = await this.client.createRunBatch(item.batch);
-
-        await this.client.uploadBatch(batch.id, item.results);
-      } catch (error) {
-        console.warn(
-          `[Assertive] Failed to replay queued upload: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+      if (queue.length) {
+        console.log(
+          `[Assertive] Replaying ${queue.length} queued upload(s)...`,
         );
-
-        remaining.push(item);
       }
-    }
 
-    saveQueue(remaining);
+      const remaining = [];
 
-    if (queue.length > remaining.length) {
-      console.log(
-        `[Assertive] Flushed ${queue.length - remaining.length} queued uploads`,
-      );
-    }
+      for (const item of queue) {
+        try {
+          const batch = await this.client.createRunBatch(item.batch);
+          await this.client.uploadBatch(batch.id, item.results);
+        } catch (error) {
+          console.warn(
+            `[Assertive] Failed to replay queued upload: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
 
+          remaining.push(item);
+        }
+      }
+
+      saveQueue(remaining);
+
+      if (queue.length > remaining.length) {
+        console.log(
+          `[Assertive] Flushed ${queue.length - remaining.length} queued uploads`,
+        );
+      }
+    });
+    
     try {
       const ciContext = getCIContext();
       const batch = await this.retry(() =>
@@ -173,13 +176,14 @@ export class AssertiveReporter implements Reporter {
     }
 
     if (this.offlineMode) {
-      enqueue({
-        batch: {
-          branch: process.env.GITHUB_REF_NAME ?? "local",
-          environment: process.env.NODE_ENV ?? "development",
-        },
-
-        results: this.results,
+      await withQueueLock(async () => {
+        enqueue({
+          batch: {
+            branch: process.env.GITHUB_REF_NAME ?? "local",
+            environment: process.env.NODE_ENV ?? "development",
+          },
+          results: this.results,
+        });
       });
 
       console.log("[Assertive] Stored offline queue");
