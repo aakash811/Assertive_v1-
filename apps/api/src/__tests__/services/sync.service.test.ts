@@ -2,27 +2,31 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../repositories/test-case.repository", () => ({
   testCaseRepository: {
+    withTransaction: vi.fn(async (callback) => callback()),
     findByProject: vi.fn(),
     upsert: vi.fn(),
     markStale: vi.fn(),
+
   },
 }));
 
 vi.mock("../../repositories/test-suite.repository", () => ({
   testSuiteRepository: {
-    findOrCreate: vi.fn(),
+    findByProject: vi.fn(),
+    create: vi.fn(),
   },
 }));
 
 vi.mock("../../repositories/tag.repository", () => ({
   tagRepository: {
-    findOrCreate: vi.fn(),
+    findByProject: vi.fn(),
+    create: vi.fn(),
   },
 }));
 
 vi.mock("../../repositories/test-case-tag.repository", () => ({
   testCaseTagRepository: {
-    replaceTags: vi.fn(),
+    syncTags: vi.fn(),
   },
 }));
 
@@ -46,20 +50,25 @@ import { testCaseTagRepository } from "../../repositories/test-case-tag.reposito
 import { historyService } from "../../services/history.service";
 import { generateMetadataDiff } from "../../utils/history-diff";
 import { syncService } from "../../services/sync.service";
+import { create } from "domain";
 
 describe("syncService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(testSuiteRepository.findOrCreate).mockResolvedValue({
+    vi.mocked(testSuiteRepository.findByProject).mockResolvedValue([]);
+
+    vi.mocked(tagRepository.findByProject).mockResolvedValue([]);
+
+    vi.mocked(testSuiteRepository.create).mockResolvedValue({
       id: "suite-1",
+      name: "Authentication",
     } as any);
 
-    vi.mocked(tagRepository.findOrCreate).mockResolvedValue({
+    vi.mocked(tagRepository.create).mockResolvedValue({
       id: "tag-1",
+      name: "smoke",
     } as any);
-
-    vi.mocked(generateMetadataDiff).mockReturnValue({});
   });
 
   it("creates new test cases", async () => {
