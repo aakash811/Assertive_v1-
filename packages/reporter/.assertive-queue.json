@@ -1,0 +1,15 @@
+[
+  {
+    "batch": {
+      "branch": "main",
+      "environment": "test"
+    },
+    "results": [
+      {
+        "externalId": "auth.login",
+        "status": "PASSED",
+        "durationMs": 100
+      }
+    ]
+  }
+]

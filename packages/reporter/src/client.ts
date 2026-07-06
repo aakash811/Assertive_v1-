@@ -12,11 +12,6 @@ type RunBatchResponse = {
   id: string;
 };
 
-type TestCaseResponse = {
-  id: string;
-  externalId: string;
-};
-
 type EmptyResponse = {
   success: true;
 };
@@ -85,19 +80,6 @@ export class AssertiveClient {
 
       body: JSON.stringify(payload),
     });
-  }
-
-  async getTestCaseByExternalId(externalId: string) {
-    try {
-      return await this.request<TestCaseResponse>(
-        `${this.config.apiUrl}/api/test-cases/by-external-id/${encodeURIComponent(externalId)}`,
-        {
-          headers: this.headers(),
-        },
-      );
-    } catch {
-      return null;
-    }
   }
 
   async uploadBatch(runBatchId: string, results: BatchResult[]) {
