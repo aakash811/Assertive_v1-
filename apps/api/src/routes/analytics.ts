@@ -6,7 +6,15 @@ import { analyticsService } from "../services/analytics.service";
 export const analyticsRoutes = new Hono<{ Variables: HonoVariables }>();
 
 analyticsRoutes.get("/summary", async (c) => {
-  const result = await analyticsService.getSummary(c.get("projectId"));
+  const from = c.req.query("from");
+  const to = c.req.query("to");
+  const projectId = c.get("projectId");
+  const window = {
+    from: from ? new Date(from) : undefined,
+    to: to ? new Date(to) : undefined,
+  };
+
+  const result = await analyticsService.getSummary(projectId, window);
 
   return c.json(ok(result));
 });
