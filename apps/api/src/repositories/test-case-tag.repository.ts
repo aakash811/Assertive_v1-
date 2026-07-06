@@ -1,25 +1,56 @@
 import { prisma } from "../lib/prisma";
 
 export const testCaseTagRepository = {
-  async replaceTags(
-    testCaseId: string,
-    tagIds: string[],
-  ) {
-    await prisma.testCaseTag.deleteMany({
+  findTagIds(testCaseId: string) {
+    return prisma.testCaseTag.findMany({
       where: {
         testCaseId,
       },
+      select: {
+        tagId: true,
+      },
     });
+  },
 
-    if (!tagIds.length) {
-      return;
+  async syncTags(
+    testCaseId: string,
+    tagIds: string[],
+  ) {
+    const existing =
+      await this.findTagIds(testCaseId);
+
+    const existingIds = new Set(
+      existing.map((t) => t.tagId),
+    );
+
+    const incomingIds = new Set(tagIds);
+
+    const toAdd = tagIds.filter(
+      (id) => !existingIds.has(id),
+    );
+
+    const toRemove = [...existingIds].filter(
+      (id) => !incomingIds.has(id),
+    );
+
+    if (toRemove.length > 0) {
+      await prisma.testCaseTag.deleteMany({
+        where: {
+          testCaseId,
+          tagId: {
+            in: toRemove,
+          },
+        },
+      });
     }
 
-    await prisma.testCaseTag.createMany({
-      data: tagIds.map((tagId) => ({
-        testCaseId,
-        tagId,
-      })),
-    });
+    if (toAdd.length > 0) {
+      await prisma.testCaseTag.createMany({
+        data: toAdd.map((tagId) => ({
+          testCaseId,
+          tagId,
+        })),
+      });
+    }
   },
 };

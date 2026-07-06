@@ -13,7 +13,18 @@ import { SyncTestCase } from "@assertive/shared";
 import { findProjectRoot } from "../utils/find-project-root";
 import { normalizePath } from "../utils/normalize-path";
 
-export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
+export interface ParserError {
+  file: string;
+  test?: string;
+  message: string;
+}
+
+export interface ParseResult {
+  tests: SyncTestCase[];
+  errors: ParserError[];
+}
+
+export async function parseTestFile(filePath: string): Promise<ParseResult> {
   const source = fs.readFileSync(filePath, "utf-8");
 
   const root = findProjectRoot();
@@ -27,6 +38,7 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
   });
 
   const results: SyncTestCase[] = [];
+  const errors : ParserError[] = [];
 
   function matchesCurrentTest(
     args: readonly (Expression | SpreadElement | ArgumentPlaceholder)[],
@@ -169,9 +181,13 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
       });
 
       if (!externalId) {
-        throw new Error(
-          `Missing assertive.id() for test "${title}" in ${relativeFilePath}`,
-        );
+        errors.push({
+          file: relativeFilePath,
+          test: title,
+          message: "Missing assertive.id()",
+        });
+
+        return;
       }
 
       results.push({
@@ -181,5 +197,8 @@ export async function parseTestFile(filePath: string): Promise<SyncTestCase[]> {
     },
   });
 
-  return results;
+  return {
+    tests: results,
+    errors,
+  }
 }

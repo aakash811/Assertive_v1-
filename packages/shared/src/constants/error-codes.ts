@@ -32,6 +32,8 @@ export const ERROR_CODES = {
   INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
 
   ORGANIZATION_NOT_FOUND: "ORGANIZATION_NOT_FOUND",
+
+  CONFLICT: "SYNC_IN_PROGRESS",
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];

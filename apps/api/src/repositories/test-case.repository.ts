@@ -418,4 +418,10 @@ export const testCaseRepository = {
       },
     });
   },
+
+  withTransaction<T>(
+    callback: () => Promise<T>,
+  ) {
+    return prisma.$transaction(callback);
+  },
 };

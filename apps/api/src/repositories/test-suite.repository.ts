@@ -22,6 +22,14 @@ export const testSuiteRepository = {
     });
   },
 
+  findByProject(projectId: string) {
+    return prisma.testSuite.findMany({
+      where: {
+        projectId,
+      },
+    });
+  },
+
   assignTestCase(
     suiteId: string,
     testCaseId: string,
