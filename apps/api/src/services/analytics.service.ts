@@ -1,3 +1,4 @@
+import { getCached, setCached } from "../lib/metrics-cache";
 import { analyticsRepository } from "../repositories/analytics.repository";
 import {
   insightsRepository,
@@ -5,8 +6,23 @@ import {
 } from "../repositories/insights.repository";
 import type { SummaryMetrics } from "@assertive/shared";
 
+type AnalyticsSummaryResponse = {
+  summary: SummaryMetrics;
+};
+
 export const analyticsService = {
-  async getSummary(projectId: string, window?: TimeWindow) {
+  async getSummary(
+    projectId: string,
+    window?: TimeWindow,
+  ): Promise<AnalyticsSummaryResponse> {
+    const cacheKey = `analytics:${projectId}:${JSON.stringify(window ?? {})}`;
+
+    const cached = getCached<AnalyticsSummaryResponse>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
     const summary = await insightsRepository.getSummary(projectId, window);
 
     const summaryMetrics: SummaryMetrics = {
@@ -25,9 +41,13 @@ export const analyticsService = {
           : Number(((summary.failedRuns / summary.totalRuns) * 100).toFixed(2)),
     };
 
-    return {
+    const result = {
       summary: summaryMetrics,
     };
+
+    setCached(cacheKey, result);
+
+    return result;
   },
 
   getMostFailingTests(projectId: string) {

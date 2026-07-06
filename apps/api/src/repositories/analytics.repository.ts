@@ -2,70 +2,82 @@ import { prisma } from "../lib/prisma";
 
 export const analyticsRepository = {
   async getMostFailingTests(projectId: string) {
-    const runs = await prisma.testRun.findMany({
+    const grouped = await prisma.testRun.groupBy({
+      by: ["testCaseId"],
       where: {
         status: "FAILED",
         testCase: {
           projectId,
         },
       },
+      _count: {
+        testCaseId: true,
+      },
+      orderBy: {
+        _count: {
+          testCaseId: "desc",
+        },
+      },
+      take: 10,
+    });
 
-      include: {
-        testCase: true,
+    const testCases = await prisma.testCase.findMany({
+      where: {
+        id: {
+          in: grouped.map((g) => g.testCaseId),
+        },
+      },
+      select: {
+        id: true,
+        title: true,
       },
     });
 
-    const map = new Map<string, { title: string; failures: number }>();
+    const titleMap = new Map(testCases.map((tc) => [tc.id, tc.title]));
 
-    for (const run of runs) {
-      const current = map.get(run.testCaseId);
-      map.set(run.testCaseId, {
-        title: run.testCase.title,
-        failures: (current?.failures ?? 0) + 1,
-      });
-    }
-
-    return [...map.values()]
-      .sort((a, b) => b.failures - a.failures)
-      .slice(0, 10);
+    return grouped.map((group) => ({
+      title: titleMap.get(group.testCaseId) ?? "Unknown",
+      failures: group._count.testCaseId,
+    }));
   },
 
   async getSlowestTests(projectId: string) {
-    const runs = await prisma.testRun.findMany({
+    const grouped = await prisma.testRun.groupBy({
+      by: ["testCaseId"],
       where: {
         testCase: {
           projectId,
         },
       },
+      _avg: {
+        durationMs: true,
+      },
+      orderBy: {
+        _avg: {
+          durationMs: "desc",
+        },
+      },
+      take: 10,
+    });
 
-      include: {
-        testCase: true,
+    const testCases = await prisma.testCase.findMany({
+      where: {
+        id: {
+          in: grouped.map((g) => g.testCaseId),
+        },
+      },
+      select: {
+        id: true,
+        title: true,
       },
     });
 
-    const stats = new Map<
-      string,
-      { title: string; total: number; count: number }
-    >();
+    const titleMap = new Map(testCases.map((tc) => [tc.id, tc.title]));
 
-    for (const run of runs) {
-      const current = stats.get(run.testCaseId);
-
-      stats.set(run.testCaseId, {
-        title: run.testCase.title,
-        total: (current?.total ?? 0) + (run.durationMs ?? 0),
-        count: (current?.count ?? 0) + 1,
-      });
-    }
-
-    return [...stats.values()]
-      .map((item) => ({
-        title: item.title,
-        averageDuration:
-          item.count === 0 ? 0 : Math.round(item.total / item.count),
-      }))
-      .sort((a, b) => b.averageDuration - a.averageDuration)
-      .slice(0, 10);
+    return grouped.map((group) => ({
+      title: titleMap.get(group.testCaseId) ?? "Unknown",
+      averageDuration: Math.round(group._avg.durationMs ?? 0),
+    }));
   },
 
   async getFlakyTests(projectId: string) {
