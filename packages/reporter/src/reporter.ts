@@ -28,25 +28,37 @@ export class AssertiveReporter implements Reporter {
 
   private async retry<T>(operation: () => Promise<T>): Promise<T> {
     let delay = 1000;
+    let lastError: unknown;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         return await operation();
       } catch (error) {
+        lastError = error;
+
         if (attempt === 3) {
-          throw error;
+          break;
         }
+
+        console.warn(
+          `[Assertive] Retry ${attempt}/3 failed. Retrying in ${delay}ms...`,
+        );
 
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2;
       }
     }
 
-    throw new Error("Retry failed");
+    throw lastError;
   }
 
   async onBegin(_config: FullConfig, _suite: Suite) {
     const queue = loadQueue();
+    if (queue.length) {
+      console.log(
+        `[Assertive] Replaying ${queue.length} queued upload(s)...`,
+      );
+    }
     const remaining = [];
 
     for (const item of queue) {
@@ -54,7 +66,13 @@ export class AssertiveReporter implements Reporter {
         const batch = await this.client.createRunBatch(item.batch);
 
         await this.client.uploadBatch(batch.id, item.results);
-      } catch {
+      } catch (error) {
+        console.warn(
+          `[Assertive] Failed to replay queued upload: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+
         remaining.push(item);
       }
     }
@@ -115,7 +133,7 @@ export class AssertiveReporter implements Reporter {
       attemptNumber: result.retry + 1,
     };
 
-    if (traceAttachment?.path) {
+    if (this.config.uploadTraces && traceAttachment?.path) {
       try {
         const trace = await this.client.requestTraceUploadUrl();
         const traceContent = fs.readFileSync(traceAttachment.path);
@@ -170,12 +188,21 @@ export class AssertiveReporter implements Reporter {
     }
 
     try {
+      console.log(
+        `[Assertive] Uploading ${this.results.length} test result(s)...`,
+      );
+
       await this.retry(() =>
         this.client.uploadBatch(this.runBatchId!, this.results),
       );
 
-      console.log(`[Assertive] Uploaded ${this.results.length} results`);
-    } catch {
+      console.log("[Assertive] Upload completed successfully.");
+    } catch (error) {
+      console.error(
+        `[Assertive] Upload failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
       enqueue({
         batch: {
           branch: process.env.GITHUB_REF_NAME ?? "local",
@@ -183,8 +210,9 @@ export class AssertiveReporter implements Reporter {
         },
         results: this.results,
       });
-
-      console.log("[Assertive] Stored offline queue");
+      console.log(
+        "[Assertive] Upload queued for retry in offline queue.",
+      );
     }
   }
 }
