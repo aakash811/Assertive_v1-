@@ -1,8 +1,9 @@
 import { analyticsRepository } from "../repositories/analytics.repository";
+import { insightsRepository } from "../repositories/insights.repository";
 
 export const analyticsService = {
   async getSummary(projectId: string) {
-    const summary = await analyticsRepository.getSummary(projectId);
+    const summary = await insightsRepository.getSummary(projectId);
 
     return {
       ...summary,
