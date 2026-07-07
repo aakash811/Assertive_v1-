@@ -4,6 +4,7 @@ export const apiKeyRepository = {
   create(data: {
     name: string;
     hashedKey: string;
+    scopes: string[];
     organizationId: string;
     expiresAt?: Date;
   }) {
