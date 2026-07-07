@@ -8,6 +8,7 @@ import {
   loadQueue,
   saveQueue,
   type QueueItem,
+  withQueueLock,
 } from "../offline-queue";
 
 const cwd = process.cwd();
@@ -16,22 +17,20 @@ describe("offlineQueue", () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), "assertive-queue-"),
-    );
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "assertive-queue-"));
 
     process.chdir(tempDir);
 
     fs.rmSync(".assertive-queue.json", {
-        force: true,
+      force: true,
     });
 
     fs.rmSync(".assertive-queue.json.tmp", {
-        force: true,
+      force: true,
     });
 
     fs.rmSync(".assertive-queue.json.lock", {
-        force: true,
+      force: true,
     });
   });
 
@@ -63,34 +62,31 @@ describe("offlineQueue", () => {
   });
 
   it("returns empty queue for invalid json", () => {
-    fs.writeFileSync(
-      ".assertive-queue.json",
-      "{invalid json",
-    );
+    fs.writeFileSync(".assertive-queue.json", "{invalid json");
 
     expect(loadQueue()).toEqual([]);
   });
 
   it("filters malformed queue items", () => {
     fs.writeFileSync(
-    ".assertive-queue.json",
-    JSON.stringify([
+      ".assertive-queue.json",
+      JSON.stringify([
         {},
         { hello: "world" },
         {
-        batch: {
+          batch: {
             branch: "main",
             environment: "test",
-        },
-        results: [
+          },
+          results: [
             {
-            externalId: "auth.login",
-            status: "PASSED",
-            durationMs: 100,
+              externalId: "auth.login",
+              status: "PASSED",
+              durationMs: 100,
             },
-        ],
+          ],
         },
-    ]),
+      ]),
     );
 
     expect(loadQueue()).toHaveLength(1);
@@ -107,10 +103,20 @@ describe("offlineQueue", () => {
 
   it("enqueue appends items", () => {
     expect(loadQueue()).toEqual([]);
-    
+
     enqueue(item);
     enqueue(item);
 
     expect(loadQueue()).toHaveLength(2);
+  });
+
+  it("executes operation under lock", async () => {
+    const result = await withQueueLock(async () => {
+      enqueue(item);
+      return "done";
+    });
+
+    expect(result).toBe("done");
+    expect(loadQueue()).toHaveLength(1);
   });
 });
