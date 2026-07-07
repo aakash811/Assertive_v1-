@@ -20,6 +20,8 @@ import { AppError } from "./lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
 import { ZodError } from "zod";
 import { projectsRoutes } from "./routes/projects";
+import { CleanupScheduler } from "./lib/cleanup/scheduler";
+import { cleanupJob } from "./jobs/cleanup-job";
 
 const app = new Hono<{ Variables: HonoVariables }>();
 
@@ -92,6 +94,13 @@ const server = serve({
   fetch: app.fetch,
   port: 4321,
 });
+
+const scheduler = new CleanupScheduler(
+  cleanupJob,
+  24 * 60 * 60 * 1000, // daily
+);
+
+scheduler.start();
 
 console.log("API running on port 4321");
 
