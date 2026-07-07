@@ -14,7 +14,8 @@ describe("trace cleanup", () => {
   beforeEach(async () => {
     cwd = process.cwd();
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "trace-cleanup-"));
-    process.chdir(tempDir);
+    await fs.mkdir(path.join(tempDir, "apps", "api"), { recursive: true });
+    process.chdir(path.join(tempDir, "apps", "api"));
   });
 
   afterEach(() => {
@@ -35,7 +36,10 @@ describe("trace cleanup", () => {
       "traces",
     );
 
-    await fs.mkdir(tracesDir, { recursive: true });
+    await fs.mkdir(tracesDir, {
+      recursive: true,
+    });
+
     const protectedTrace = path.join(tracesDir, "keep.protected.zip");
     syncFs.writeFileSync(protectedTrace, "trace");
 
