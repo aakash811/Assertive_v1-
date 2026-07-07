@@ -1,16 +1,50 @@
+import { CleanupEngine } from "../lib/cleanup/cleanup-engine";
+import type { CleanupPolicy } from "../lib/cleanup/cleanup-policy";
+import { cleanupExpiredTraces } from "../lib/storage/trace-cleanup";
 import { historyRepository } from "../repositories/history.repository";
 import { testRunRepository } from "../repositories/test-run.repository";
 
+const policies: CleanupPolicy[] = [
+  {
+    name: "runs",
+    enabled: true,
+
+    async execute() {
+      const result = await testRunRepository.deleteAll();
+      return result.count;
+    },
+  },
+
+  {
+    name: "history",
+    enabled: true,
+
+    async execute() {
+      const result = await historyRepository.deleteAll();
+      return result.count;
+    },
+  },
+
+  {
+    name: "traces",
+    enabled: true,
+
+    execute() {
+      return cleanupExpiredTraces();
+    },
+  },
+];
+
 export const cleanupService = {
   async run() {
-    const runs = await testRunRepository.deleteAll();
+    const engine = new CleanupEngine(policies);
 
-    const history = await historyRepository.deleteAll();
+    const result = await engine.run();
 
     return {
-      runs: runs.count,
-      history: history.count,
-      traces: 0,
+      runs: result.runs ?? 0,
+      history: result.history ?? 0,
+      traces: result.traces ?? 0,
     };
   },
 };
