@@ -18,4 +18,14 @@ describe("resolveConfig", () => {
     expect(config.uploadTraces).toBe(true);
     expect(config.retries).toBe(5);
   });
+
+  it("reads env vars", () => {
+    process.env.ASSERTIVE_API_URL = "http://api";
+    process.env.ASSERTIVE_API_KEY = "abc";
+
+    const config = resolveConfig();
+
+    expect(config.apiUrl).toBe("http://api");
+    expect(config.apiKey).toBe("abc");
+  });
 });
