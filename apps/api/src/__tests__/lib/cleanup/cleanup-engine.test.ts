@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-
-import { CleanupEngine } from "../cleanup-engine";
+import { CleanupEngine } from "../../../lib/cleanup/cleanup-engine";
 
 describe("CleanupEngine", () => {
   it("runs enabled policies", async () => {

@@ -21,6 +21,9 @@ export type PaginatedResponse<T> = {
     page: number;
     limit: number;
     total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
   };
 };
 
@@ -39,10 +42,17 @@ export function paginated<T>(
     total: number;
   },
 ): PaginatedResponse<T> {
+  const totalPages = meta.total === 0 ? 0 : Math.ceil(meta.total / meta.limit);
+
   return {
     success: true,
     items: data,
-    pagination: meta,
+    pagination: {
+      ...meta,
+      totalPages,
+      hasNext: meta.page < totalPages,
+      hasPrevious: meta.page > 1,
+    },
   };
 }
 

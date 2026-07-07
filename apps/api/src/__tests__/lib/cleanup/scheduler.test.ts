@@ -1,6 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-
-import { CleanupScheduler } from "../scheduler";
+import { CleanupScheduler } from "../../../lib/cleanup/scheduler";
 
 describe("CleanupScheduler", () => {
   beforeEach(() => {
