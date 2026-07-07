@@ -37,31 +37,28 @@ export const apiKeyAuth = createMiddleware<{
 
   const project = override
     ? await prisma.project.findFirst({
-      where: {
-        id: override,
-        organizationId: apiKey.organizationId,
-      }
-    })
+        where: {
+          id: override,
+          organizationId: apiKey.organizationId,
+        },
+      })
     : await prisma.project.findFirst({
-      where: {
-        organizationId: apiKey.organizationId,
-      },
-      orderBy: {
-        createdAt: "asc",
-      }
-    });
+        where: {
+          organizationId: apiKey.organizationId,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
 
-  if(!project){
-    throw new AppError(
-      ERROR_CODES.PROJECT_NOT_FOUND,
-      "Project not found",
-      404,
-    )
+  if (!project) {
+    throw new AppError(ERROR_CODES.PROJECT_NOT_FOUND, "Project not found", 404);
   }
 
   c.set("projectId", project.id);
   c.set("apiKeyId", apiKey.id);
   c.set("organizationId", apiKey.organizationId);
+  c.set("apiScopes", apiKey.scopes);
 
   await next();
 });
