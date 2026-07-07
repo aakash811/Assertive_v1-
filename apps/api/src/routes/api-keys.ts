@@ -6,6 +6,7 @@ import { AppError } from "../lib/app-error";
 import { API_SCOPES, ERROR_CODES, type ApiScope } from "@assertive/shared";
 import { requireScope } from "../middleware/require-scope";
 import { apiKeyAuth } from "../middleware/api-key-auth";
+import { auditService } from "../services/audit.service";
 
 export const apiKeyRoutes = new Hono();
 
@@ -30,6 +31,8 @@ apiKeyRoutes.post("/", requireScope(API_SCOPES.API_KEYS_WRITE), async (c) => {
     body.scopes as ApiScope[],
   );
 
+  auditService.apiKeyCreated(result.apiKey.id, organizationId);
+
   return c.json(
     ok({
       id: result.apiKey.id,
@@ -51,7 +54,7 @@ apiKeyRoutes.delete(
   requireScope(API_SCOPES.API_KEYS_WRITE),
   async (c) => {
     await apiKeyRepository.revoke(c.req.param("id"));
-
+    auditService.apiKeyRevoked(c.req.param("id"));
     return c.json(
       ok({
         success: true,

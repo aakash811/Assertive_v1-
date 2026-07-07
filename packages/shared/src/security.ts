@@ -15,3 +15,12 @@ export const API_SCOPES = {
 } as const;
 
 export type ApiScope = (typeof API_SCOPES)[keyof typeof API_SCOPES];
+
+export const ORGANIZATION_ROLES = {
+  OWNER: "owner",
+  ADMIN: "admin",
+  MEMBER: "member",
+} as const;
+
+export type OrganizationRole =
+  (typeof ORGANIZATION_ROLES)[keyof typeof ORGANIZATION_ROLES];

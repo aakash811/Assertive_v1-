@@ -19,12 +19,16 @@ describe("apiKeyService", () => {
       id: "key-1",
       name: "local-dev",
       hashedKey: "hashed",
-      projectId: "project-1",
+      organizationId: "project-1",
+      scopes: ["api-keys:read"],
+      isActive: true,
     };
 
     vi.mocked(apiKeyRepository.create).mockResolvedValue(fakeApiKey as never);
 
-    const result = await apiKeyService.create("project-1", "local-dev");
+    const result = await apiKeyService.create("project-1", "local-dev", [
+      "api-keys:read",
+    ]);
 
     expect(result.rawKey).toContain("ask_live_");
     expect(result.apiKey).toEqual(fakeApiKey);
@@ -33,6 +37,7 @@ describe("apiKeyService", () => {
       name: "local-dev",
       organizationId: "project-1",
       hashedKey: expect.any(String),
+      scopes: ["api-keys:read"],
     });
   });
 });
