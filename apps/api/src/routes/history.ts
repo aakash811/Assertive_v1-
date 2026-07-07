@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { paginated } from "../lib/api-response";
+import { getPagination } from "../lib/pagination";
 import type { HonoVariables } from "../types/hono";
 import { historyService } from "../services/history.service";
 
@@ -8,8 +9,11 @@ export const historyRoutes = new Hono<{
 }>();
 
 historyRoutes.get("/test-cases/:id/history", async (c) => {
-  const page = Number(c.req.query("page")) || 1;
-  const limit = Number(c.req.query("limit")) || 20;
+  const { page, limit } = getPagination(
+    c.req.query("page"),
+    c.req.query("limit"),
+  );
+
   const history = await historyService.list(c.req.param("id"), page, limit);
 
   return c.json(
@@ -23,8 +27,11 @@ historyRoutes.get("/test-cases/:id/history", async (c) => {
 
 historyRoutes.get("/history/:externalId", async (c) => {
   const projectId = c.get("projectId");
-  const page = Number(c.req.query("page")) || 1;
-  const limit = Number(c.req.query("limit")) || 20;
+
+  const { page, limit } = getPagination(
+    c.req.query("page"),
+    c.req.query("limit"),
+  );
 
   const history = await historyService.listByExternalId(
     projectId,

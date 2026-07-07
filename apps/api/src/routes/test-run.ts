@@ -5,6 +5,7 @@ import { createTestRunSchema } from "../validators/test-run.validators";
 import { testRunService } from "../services/test-run.service";
 import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
+import { getPagination } from "../lib/pagination";
 
 export const testRunRoutes = new Hono<{
   Variables: HonoVariables;
@@ -20,8 +21,10 @@ testRunRoutes.post("/", async (c) => {
 testRunRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
   const testCaseId = c.req.query("testCaseId");
-  const page = Number(c.req.query("page")) || 1;
-  const limit = Number(c.req.query("limit")) || 20;
+  const { page, limit } = getPagination(
+    c.req.query("page"),
+    c.req.query("limit"),
+  );
 
   const result = await testRunService.list(projectId, page, limit, testCaseId);
 

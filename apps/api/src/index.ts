@@ -22,6 +22,11 @@ import { ZodError } from "zod";
 import { projectsRoutes } from "./routes/projects";
 import { CleanupScheduler } from "./lib/cleanup/scheduler";
 import { cleanupJob } from "./jobs/cleanup-job";
+import { requestIdMiddleware } from "./middleware/request-id";
+import { requestLogger } from "./middleware/request-logger";
+import { logger } from "./lib/logger";
+import { healthRoutes } from "./routes/health";
+import { config } from "./lib/config";
 
 const app = new Hono<{ Variables: HonoVariables }>();
 
@@ -33,6 +38,9 @@ app.use(
     allowHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+app.use("*", requestIdMiddleware);
+app.use("*", requestLogger);
 
 app.onError((error, c) => {
   if (error instanceof AppError) {
@@ -49,7 +57,10 @@ app.onError((error, c) => {
     );
   }
 
-  console.error(error);
+  logger.error("Unhandled exception", {
+    requestId: c.get("requestId"),
+    error: error instanceof Error ? error.message : String(error),
+  });
 
   return c.json(
     fail(ERROR_CODES.INTERNAL_SERVER_ERROR, "Internal server error"),
@@ -57,12 +68,7 @@ app.onError((error, c) => {
   );
 });
 
-app.get("/api/health", (c) => {
-  return c.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-  });
-});
+app.route("/api/health", healthRoutes);
 
 app.route("/test", testRoutes);
 
@@ -92,7 +98,7 @@ app.route("/api", protectedRoutes);
 
 const server = serve({
   fetch: app.fetch,
-  port: 4321,
+  port: config.port,
 });
 
 const scheduler = new CleanupScheduler(
@@ -102,10 +108,13 @@ const scheduler = new CleanupScheduler(
 
 scheduler.start();
 
-console.log("API running on port 4321");
+logger.info("API started", {
+  port: config.port,
+  environment: config.nodeEnv,
+});
 
 async function shutdown() {
-  console.log("Shutting down...");
+  logger.info("Shutdown requested");
   await prisma.$disconnect();
   process.exit(0);
 }
@@ -113,5 +122,3 @@ async function shutdown() {
 process.on("SIGINT", shutdown);
 
 process.on("SIGTERM", shutdown);
-
-console.log("API running on the port 4321");

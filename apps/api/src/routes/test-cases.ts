@@ -11,6 +11,7 @@ import {
 } from "../validators/test-case.validator";
 import { TestStatus } from "@prisma/client";
 import { SyncState } from "@prisma/client";
+import { getPagination } from "../lib/pagination";
 
 export const testCaseRoutes = new Hono<{
   Variables: HonoVariables;
@@ -26,10 +27,12 @@ testCaseRoutes.post("/", async (c) => {
 
 testCaseRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
-  const page = Number(c.req.query("page")) || 1;
-  const limit = Number(c.req.query("limit")) || 20;
+  const { page, limit } = getPagination(
+    c.req.query("page"),
+    c.req.query("limit"),
+  );
   const q = c.req.query("q");
-  
+
   const rawStatus = c.req.query("status");
   const status =
     rawStatus && Object.values(TestStatus).includes(rawStatus as TestStatus)
@@ -47,7 +50,7 @@ testCaseRoutes.get("/", async (c) => {
     rawLifecycle === "ACTIVE" || rawLifecycle === "ARCHIVED"
       ? rawLifecycle
       : undefined;
-  
+
   const owner = c.req.query("owner");
   const tag = c.req.query("tag");
   const flaky = c.req.query("flaky");
@@ -100,14 +103,9 @@ testCaseRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
   const projectId = c.get("projectId");
 
-  const includeArchived =
-  c.req.query("includeArchived") === "true";
+  const includeArchived = c.req.query("includeArchived") === "true";
 
-  const testCase = await testCaseService.get(
-    id,
-    projectId,
-    includeArchived,
-  );
+  const testCase = await testCaseService.get(id, projectId, includeArchived);
 
   if (!testCase) {
     throw new AppError(

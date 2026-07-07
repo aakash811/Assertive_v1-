@@ -8,6 +8,7 @@ import {
 import { runBatchService } from "../services/run-batch.service";
 import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
+import { getPagination } from "../lib/pagination";
 
 export const runBatchRoutes = new Hono<{
   Variables: HonoVariables;
@@ -34,8 +35,10 @@ runBatchRoutes.post("/:id/upload", async (c) => {
 
 runBatchRoutes.get("/", async (c) => {
   const projectId = c.get("projectId");
-  const page = Number(c.req.query("page")) || 1;
-  const limit = Number(c.req.query("limit")) || 20;
+  const { page, limit } = getPagination(
+    c.req.query("page"),
+    c.req.query("limit"),
+  );
   const q = c.req.query("q");
   const environment = c.req.query("environment");
   const triggeredBy = c.req.query("triggeredBy");

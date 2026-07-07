@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import { getRetentionMs } from "../retention";
+import { getRetentionMs } from "../../../lib/cleanup/retention";
 
 describe("retention", () => {
   it("parses days", () => {

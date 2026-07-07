@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createSignedToken, verifySignedToken } from "../trace-signing";
+import {
+  createSignedToken,
+  verifySignedToken,
+} from "../../../lib/storage/trace-signing";
 
 describe("trace signing", () => {
   it("accepts valid token", () => {

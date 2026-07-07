@@ -5,7 +5,7 @@ import os from "node:os";
 
 import { beforeEach, afterEach, describe, expect, it } from "vitest";
 
-import { cleanupExpiredTraces } from "../trace-cleanup";
+import { cleanupExpiredTraces } from "../../../lib/storage/trace-cleanup";
 
 describe("trace cleanup", () => {
   let cwd: string;
