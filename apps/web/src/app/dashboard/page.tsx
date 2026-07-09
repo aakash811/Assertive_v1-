@@ -19,7 +19,7 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { RunBatchesTable } from "@/components/run-batches/RunBatchesTable";
 import { HealthCard } from "@/components/dashboard/HealthCard";
 import { RecentFailures } from "@/components/dashboard/RecentFailures";
-import { TrendCard } from "@/components/dashboard/TrendCard";
+import { EmptyState, PageHeader } from "@/components/common/ui";
 
 export default async function DashboardPage() {
   const [
@@ -44,19 +44,26 @@ export default async function DashboardPage() {
   ]);
   if (metrics.totalTests === 0) {
     return (
-      <div className="space-y-8">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Dashboard"
+          description="A live overview of synced test inventory, runs, and failures."
+        />
 
-        <div className="rounded-lg border p-8 text-center">
-          No test data available yet.
-        </div>
+        <EmptyState
+          title="No analytics yet"
+          description="Run your first Playwright sync with the Assertive reporter to populate dashboard metrics."
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Dashboard"
+        description="A live overview of synced test inventory, runs, and failures."
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <MetricCard title="Total Tests" value={metrics.totalTests} />
@@ -68,25 +75,37 @@ export default async function DashboardPage() {
         <MetricCard title="Flaky Tests" value={metrics.flakyTests} />
 
         <MetricCard title="Pass Rate" value={`${metrics.passRate}%`} />
-        <HealthCard passRate={metrics.passRate} />
       </div>
+
+      <HealthCard passRate={metrics.passRate} />
+
+      <RecentFailures items={recentFailures} />
+
+      <div className="space-y-3">
+        <h2 className="text-base font-semibold text-gray-950">
+          Recent Run Batches
+        </h2>
+        <RunBatchesTable items={runBatches.items} />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <PassRateChart passRate={metrics.passRate} />
 
         <FailureChart failureRate={100 - metrics.passRate} />
+
+        <StatusPieChart
+          data={status.map((item) => ({
+            name: item.name,
+            value: item.value,
+          }))}
+        />
       </div>
-      <StatusPieChart
-        data={status.map((item) => ({
-          name: item.name,
-          value: item.value,
-        }))}
-      />
+
       <div className="grid gap-6 lg:grid-cols-3">
         <AnalyticsTable
           title="Most Failing Tests"
           rows={failures.map((item) => ({
             name: item.title,
-
             value: item.failures,
           }))}
         />
@@ -95,7 +114,6 @@ export default async function DashboardPage() {
           title="Slowest Tests"
           rows={slowest.map((item) => ({
             name: item.title,
-
             value: `${item.averageDuration} ms`,
           }))}
         />
@@ -104,15 +122,9 @@ export default async function DashboardPage() {
           title="Flaky Tests"
           rows={flaky.map((item) => ({
             name: item.title,
-
             value: `${item.flakyScore}%`,
           }))}
         />
-      </div>
-      <RecentFailures items={recentFailures} />
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Recent Run Batches</h2>
-        <RunBatchesTable items={runBatches.items} />
       </div>
     </div>
   );

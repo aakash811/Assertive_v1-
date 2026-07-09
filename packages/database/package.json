@@ -19,5 +19,8 @@
       "import": "./src/client.ts",
       "require": "./src/client.ts"
     }
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1"
   }
 }

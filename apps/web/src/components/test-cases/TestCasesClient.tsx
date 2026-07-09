@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { TestCasesToolbar } from "./TestCasesToolbar";
 import { TestCasesTable } from "./TestCasesTable";
 import type { TestCase } from "@/types/test-case";
 import { TestCasesSort } from "./TestCasesSort";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Button, PageHeader } from "@/components/common/ui";
 
 type Props = {
   items: TestCase[];
@@ -56,8 +56,15 @@ export function TestCasesClient({
     }
 
     router.push(`${pathname}?${params.toString()}`);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
+  const start =
+    pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
+  const end = Math.min(pagination.page * pagination.limit, pagination.total);
   const totalPages = Math.max(
     1,
     Math.ceil(pagination.total / pagination.limit),
@@ -65,7 +72,10 @@ export function TestCasesClient({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Test Cases</h1>
+      <PageHeader
+        title="Test Cases"
+        description="Search, filter, and inspect the synced test inventory."
+      />
 
       <TestCasesToolbar
         search={q}
@@ -86,36 +96,37 @@ export function TestCasesClient({
         onFlaky={(value) => updateParam("flaky", value ? "true" : "")}
       />
 
-      <TestCasesSort
-        value={sort}
-        onChange={(value) => updateParam("sort", value)}
-      />
-
-      <div className="text-sm text-muted-foreground">
-        {pagination.total} test cases
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-gray-600">
+          {pagination.total} test cases
+        </div>
+        <TestCasesSort
+          value={sort}
+          onChange={(value) => updateParam("sort", value)}
+        />
       </div>
 
       <TestCasesTable items={items} />
-      <div className="flex items-center justify-between">
-        <button
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button
           disabled={page === 1}
           onClick={() => updateParam("page", String(page - 1))}
-          className="rounded border px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          ← Previous
-        </button>
+          Previous
+        </Button>
 
-        <div className="text-sm text-gray-500">
-          Page {page} of {totalPages}
+        <div className="text-center text-sm text-gray-500">
+          Page {page} of {totalPages} · Showing {start}-{end} of{" "}
+          {pagination.total}
         </div>
 
-        <button
+        <Button
           disabled={page === totalPages}
           onClick={() => updateParam("page", String(page + 1))}
-          className="rounded border px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Next →
-        </button>
+          Next
+        </Button>
       </div>
     </div>
   );

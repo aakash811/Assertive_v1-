@@ -4,6 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RunBatch } from "@/types/run-batch";
 import { RunBatchesToolbar } from "./RunBatchesToolbar";
 import { RunBatchesTable } from "./RunBatchesTable";
+import { Button, PageHeader } from "@/components/common/ui";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 
 type Props = {
   items: RunBatch[];
@@ -28,6 +30,8 @@ export function RunBatchesClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const totalPages = Math.max(1, Math.ceil(total / limit));
+  const start = total === 0 ? 0 : (page - 1) * limit + 1;
+  const end = Math.min(page * limit, total);
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -47,7 +51,10 @@ export function RunBatchesClient({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Run Batches</h1>
+      <PageHeader
+        title="Run Batches"
+        description="Inspect synced Playwright run batches and execution metadata."
+      />
 
       <RunBatchesToolbar
         q={q}
@@ -58,68 +65,42 @@ export function RunBatchesClient({
         onTriggeredBy={(value) => updateParam("triggeredBy", value)}
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded border p-4">
-          Total Batches
-          <div className="text-2xl font-bold">{total}</div>
-        </div>
-
-        <div className="rounded border p-4">
-          Environments
-          <div className="text-2xl font-bold">
-            {new Set(items.map((i) => i.environment).filter(Boolean)).size}
-          </div>
-        </div>
-
-        <div className="rounded border p-4">
-          Triggered By
-          <div className="text-2xl font-bold">
-            {new Set(items.map((i) => i.triggeredBy).filter(Boolean)).size}
-          </div>
-        </div>
-
-        <div className="rounded border p-4">
-          Branches
-          <div className="text-2xl font-bold">
-            {new Set(items.map((i) => i.branch).filter(Boolean)).size}
-          </div>
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard title="Total Batches" value={total} />
+        <MetricCard
+          title="Environments"
+          value={new Set(items.map((i) => i.environment).filter(Boolean)).size}
+        />
+        <MetricCard
+          title="Triggered By"
+          value={new Set(items.map((i) => i.triggeredBy).filter(Boolean)).size}
+        />
+        <MetricCard
+          title="Branches"
+          value={new Set(items.map((i) => i.branch).filter(Boolean)).size}
+        />
       </div>
 
       <RunBatchesTable items={items} />
 
-      <div className="flex items-center gap-4">
-        <button
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button
           disabled={page === 1}
-          className="rounded border px-3 py-1 disabled:opacity-50"
-          onClick={() =>
-            updateParam(
-              "page",
-
-              String(page - 1),
-            )
-          }
+          onClick={() => updateParam("page", String(page - 1))}
         >
           Previous
-        </button>
+        </Button>
 
-        <span>
-          Page {page} of {totalPages}
+        <span className="text-center text-sm text-gray-500">
+          Page {page} of {totalPages} · Showing {start}-{end} of {total}
         </span>
 
-        <button
+        <Button
           disabled={page >= totalPages}
-          className="rounded border px-3 py-1 disabled:opacity-50"
-          onClick={() =>
-            updateParam(
-              "page",
-
-              String(page + 1),
-            )
-          }
+          onClick={() => updateParam("page", String(page + 1))}
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );

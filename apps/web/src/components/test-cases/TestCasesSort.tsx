@@ -15,7 +15,8 @@ export function TestCasesSort({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-md border px-3 py-2"
+      aria-label="Sort test cases"
+      className="h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm hover:bg-gray-50 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900 dark:focus:ring-blue-950"
     >
       <option value="updated">Recently Updated</option>
 

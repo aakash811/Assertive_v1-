@@ -1,6 +1,7 @@
-import { getRunBatch } from "@/lib/api";
-
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { PageHeader, SectionCard } from "@/components/common/ui";
 import { RunResultsTable } from "@/components/run-batches/RunResultsTable";
+import { getRunBatch } from "@/lib/api";
 
 type Props = {
   params: Promise<{
@@ -18,74 +19,68 @@ export default async function RunBatchPage({ params }: Props) {
       : Math.round((batch.passedCount / batch.totalCount) * 100);
 
   const traceCount = (batch.runs ?? []).filter((run) => run.traceUrl).length;
+
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border p-4">
-        <h2 className="mb-4 text-lg font-semibold">Batch Information</h2>
+      <PageHeader
+        title="Run Batch"
+        description={`${batch.branch ?? "unknown"} · ${
+          batch.commitSha?.slice(0, 7) ?? "no commit"
+        }`}
+      />
 
-        <div className="grid gap-4 md:grid-cols-2">
+      <SectionCard title="Batch Information">
+        <dl className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-5">
           <div>
-            <strong>Branch:</strong> {batch.branch ?? "-"}
+            <dt className="text-sm font-medium text-gray-600">Branch</dt>
+            <dd className="mt-1 text-sm text-gray-950">
+              {batch.branch ?? "-"}
+            </dd>
           </div>
 
           <div>
-            <strong>Commit:</strong> {batch.commitSha?.slice(0, 7) ?? "-"}
+            <dt className="text-sm font-medium text-gray-600">Commit</dt>
+            <dd className="mt-1 font-mono text-sm text-gray-950">
+              {batch.commitSha?.slice(0, 7) ?? "-"}
+            </dd>
           </div>
 
           <div>
-            <strong>Environment:</strong> {batch.environment ?? "-"}
+            <dt className="text-sm font-medium text-gray-600">Environment</dt>
+            <dd className="mt-1 text-sm text-gray-950">
+              {batch.environment ?? "-"}
+            </dd>
           </div>
 
           <div>
-            <strong>Triggered By:</strong> {batch.triggeredBy ?? "-"}
+            <dt className="text-sm font-medium text-gray-600">Triggered By</dt>
+            <dd className="mt-1 text-sm text-gray-950">
+              {batch.triggeredBy ?? "-"}
+            </dd>
           </div>
 
           <div>
-            <strong>Created:</strong>{" "}
-            {new Date(batch.createdAt).toLocaleString()}
+            <dt className="text-sm font-medium text-gray-600">Created</dt>
+            <dd className="mt-1 text-sm text-gray-950">
+              {new Date(batch.createdAt).toLocaleString()}
+            </dd>
           </div>
-        </div>
+        </dl>
+      </SectionCard>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <MetricCard title="Total" value={batch.totalCount} />
+        <MetricCard title="Passed" value={batch.passedCount} />
+        <MetricCard title="Failed" value={batch.failedCount} />
+        <MetricCard title="Skipped" value={batch.skippedCount} />
+        <MetricCard title="Success Rate" value={`${successRate}%`} />
       </div>
 
-      <h1 className="text-3xl font-bold">Run Batch</h1>
+      <MetricCard
+        title="Traces Available"
+        value={`${traceCount} / ${batch.runs?.length ?? 0}`}
+      />
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-lg border p-4">
-          Total
-          <div className="text-2xl font-bold">{batch.totalCount}</div>
-        </div>
-
-        <div className="rounded-lg border p-4">
-          Passed
-          <div className="text-2xl font-bold">{batch.passedCount}</div>
-        </div>
-
-        <div className="rounded-lg border p-4">
-          Failed
-          <div className="text-2xl font-bold">{batch.failedCount}</div>
-        </div>
-
-        <div className="rounded-lg border p-4">
-          Skipped
-          <div className="text-2xl font-bold">{batch.skippedCount}</div>
-        </div>
-      </div>
-
-      <div className="rounded-lg border p-4">
-        <div className="mb-2 flex justify-between text-sm">
-          <span>Success Rate</span>
-
-          <span>{successRate}%</span>
-        </div>
-      </div>
-
-      <div className="rounded-lg border p-4">
-        <div className="text-sm text-gray-500">Traces Available</div>
-
-        <div className="mt-2 text-2xl font-bold">
-          {traceCount} / {batch.runs?.length ?? 0}
-        </div>
-      </div>
       <RunResultsTable items={batch.runs ?? []} />
     </div>
   );

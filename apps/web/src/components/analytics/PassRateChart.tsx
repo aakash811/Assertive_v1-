@@ -1,22 +1,37 @@
+import { EmptyState, SectionCard } from "@/components/common/ui";
+
 type Props = {
   passRate: number;
 };
 
 export function PassRateChart({ passRate }: Props) {
+  if (!Number.isFinite(passRate)) {
+    return (
+      <EmptyState
+        title="No pass rate data"
+        description="Run your first Playwright sync to populate this chart."
+      />
+    );
+  }
+
+  const width = Math.max(0, Math.min(100, passRate));
+
   return (
-    <div className="rounded-lg border bg-green-300 p-6">
-      <h2 className="mb-4 text-lg font-semibold">Pass Rate</h2>
+    <SectionCard title="Pass Rate">
+      <div className="p-5">
+        <div className="mb-4 flex items-baseline justify-between">
+          <div className="text-3xl font-semibold tracking-tight text-gray-950 dark:text-gray-50">
+            {passRate}%
+          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Latest aggregate
+          </div>
+        </div>
 
-      <div className="mb-2 text-3xl font-bold">{passRate}%</div>
-
-      <div className="h-4 rounded bg-gray-200">
-        <div
-          className="h-full rounded bg-green-500"
-          style={{
-            width: `${passRate}%`,
-          }}
-        />
+        <div className="h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+          <div className="h-full bg-blue-600" style={{ width: `${width}%` }} />
+        </div>
       </div>
-    </div>
+    </SectionCard>
   );
 }

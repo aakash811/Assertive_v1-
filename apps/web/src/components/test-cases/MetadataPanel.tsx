@@ -1,3 +1,5 @@
+import { SectionCard } from "@/components/common/ui";
+import { SyncStateBadge } from "@/components/common/SyncStateBadge";
 import { MetadataTestCase } from "@/types/test-case";
 
 type Props = {
@@ -6,30 +8,34 @@ type Props = {
 
 export function MetadataPanel({ testCase }: Props) {
   return (
-    <div className="rounded-lg border bg-amber-700 p-4">
-      <h2 className="mb-4 text-lg font-semibold">Metadata</h2>
-
-      <dl className="space-y-2">
+    <SectionCard title="Metadata">
+      <dl className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <dt>Owner</dt>
-          <dd>{testCase.owner ?? "-"}</dd>
+          <dt className="text-sm font-medium text-gray-600">Owner</dt>
+          <dd className="mt-1 text-sm text-gray-950">{testCase.owner ?? "-"}</dd>
         </div>
 
         <div>
-          <dt>Priority</dt>
-          <dd>{testCase.priority ?? "-"}</dd>
+          <dt className="text-sm font-medium text-gray-600">Priority</dt>
+          <dd className="mt-1 text-sm text-gray-950">
+            {testCase.priority ?? "-"}
+          </dd>
         </div>
 
         <div>
-          <dt>Type</dt>
-          <dd>{testCase.testType ?? "-"}</dd>
+          <dt className="text-sm font-medium text-gray-600">Type</dt>
+          <dd className="mt-1 text-sm text-gray-950">
+            {testCase.testType ?? "-"}
+          </dd>
         </div>
 
         <div>
-          <dt>Sync State</dt>
-          <dd>{testCase.syncState ?? "-"}</dd>
+          <dt className="text-sm font-medium text-gray-600">Sync State</dt>
+          <dd className="mt-1">
+            <SyncStateBadge state={testCase.syncState ?? "STALE"} />
+          </dd>
         </div>
       </dl>
-    </div>
+    </SectionCard>
   );
 }

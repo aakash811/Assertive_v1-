@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { EmptyState } from "@/components/common/ui";
 import { RunResult } from "@/types/run-result";
 
 type Props = {
@@ -8,35 +9,33 @@ type Props = {
 export function RunResultsTable({ items }: Props) {
   if (!items.length) {
     return (
-      <div className="rounded-lg border p-8 text-center">
-        No test runs found
-      </div>
+      <EmptyState
+        title="No test runs found"
+        description="This batch does not have synced run results yet."
+      />
     );
   }
+
   return (
-    <div className="overflow-x-auto rounded-lg border bg-emerald-900">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b">
-            <th className="px-4 py-3 text-left">Test</th>
-
-            <th className="px-4 py-3 text-left">Status</th>
-
-            <th className="px-4 py-3 text-left">Duration</th>
-
-            <th className="px-4 py-3 text-left">Trace</th>
-
-            <th className="px-4 py-3 text-left">Attempt</th>
+    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <table className="w-full min-w-[760px] text-sm">
+        <thead className="sticky top-0 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+          <tr className="border-b border-gray-200 dark:border-gray-800">
+            <th className="px-4 py-3 text-left font-medium">Test</th>
+            <th className="px-4 py-3 text-left font-medium">Status</th>
+            <th className="px-4 py-3 text-left font-medium">Duration</th>
+            <th className="px-4 py-3 text-left font-medium">Trace</th>
+            <th className="px-4 py-3 text-left font-medium">Attempt</th>
           </tr>
         </thead>
 
-        <tbody>
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
           {items.map((run) => (
             <tr
               key={run.id}
-              className="border-b transition-colors hover:bg-emerald-700"
+              className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
             >
-              <td className="px-4 py-3">
+              <td className="max-w-[420px] truncate px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
                 {run.testCase?.title ?? run.testCaseId}
               </td>
 
@@ -44,7 +43,7 @@ export function RunResultsTable({ items }: Props) {
                 <StatusBadge status={run.status} />
               </td>
 
-              <td className="px-4 py-3">
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                 {run.durationMs ? `${run.durationMs} ms` : "-"}
               </td>
 
@@ -54,15 +53,17 @@ export function RunResultsTable({ items }: Props) {
                     href={run.traceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className=" rounded border px-3 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                    className="inline-flex h-8 items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-900"
                   >
                     Open Trace
                   </a>
                 ) : (
-                  "-"
+                  <span className="text-gray-500 dark:text-gray-400">-</span>
                 )}
               </td>
-              <td className="px-4 py-3">{run.attemptNumber ?? "-"}</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                {run.attemptNumber ?? "-"}
+              </td>
             </tr>
           ))}
         </tbody>

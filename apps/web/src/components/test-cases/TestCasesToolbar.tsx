@@ -38,19 +38,25 @@ export function TestCasesToolbar({
   onSyncState,
   onFlaky,
 }: Props) {
+  const controlClass =
+    "h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 hover:bg-gray-50 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:bg-gray-900 dark:focus:ring-blue-950";
+
   return (
-    <div className="mb-6 flex flex-wrap gap-3">
+    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.5fr)_repeat(6,minmax(120px,1fr))_auto]">
       <input
         value={search}
         onChange={(e) => onSearch(e.target.value)}
         placeholder="Search title or ID..."
-        className="rounded-md border px-3 py-2"
+        aria-label="Search test cases"
+        className={controlClass}
       />
 
       <select
         value={status}
         onChange={(e) => onStatus(e.target.value)}
-        className="rounded-md border px-3 py-2"
+        aria-label="Filter by status"
+        className={controlClass}
       >
         <option value="">All Status</option>
         <option value="PASSED">Passed</option>
@@ -64,20 +70,23 @@ export function TestCasesToolbar({
         value={owner}
         onChange={(e) => onOwner(e.target.value)}
         placeholder="Owner"
-        className="rounded-md border px-3 py-2"
+        aria-label="Filter by owner"
+        className={controlClass}
       />
 
       <input
         value={tag}
         onChange={(e) => onTag(e.target.value)}
         placeholder="Tag"
-        className="rounded-md border px-3 py-2"
+        aria-label="Filter by tag"
+        className={controlClass}
       />
 
       <select
         value={type}
         onChange={(e) => onType(e.target.value)}
-        className="rounded-md border px-3 py-2"
+        aria-label="Filter by type"
+        className={controlClass}
       >
         <option value="">All Types</option>
         <option value="unit">Unit</option>
@@ -88,7 +97,8 @@ export function TestCasesToolbar({
       <select
         value={priority}
         onChange={(e) => onPriority(e.target.value)}
-        className="rounded-md border px-3 py-2"
+        aria-label="Filter by priority"
+        className={controlClass}
       >
         <option value="">All Priorities</option>
         <option value="critical">Critical</option>
@@ -100,21 +110,24 @@ export function TestCasesToolbar({
       <select
         value={syncState}
         onChange={(e) => onSyncState(e.target.value)}
-        className="rounded-md border px-3 py-2"
+        aria-label="Filter by sync state"
+        className={controlClass}
       >
         <option value="">All Sync States</option>
         <option value="SYNCED">Synced</option>
         <option value="STALE">Stale</option>
       </select>
 
-      <label className="flex items-center gap-2 rounded-md border px-3 py-2">
+      <label className="flex h-9 items-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300">
         <input
           type="checkbox"
           checked={flaky}
           onChange={(e) => onFlaky(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300 text-blue-600"
         />
         Flaky only
       </label>
+      </div>
     </div>
   );
 }

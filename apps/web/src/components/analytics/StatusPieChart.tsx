@@ -1,6 +1,14 @@
 "use client";
 
-import { ResponsiveContainer, PieChart, Pie, Tooltip, Legend } from "recharts";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Tooltip,
+  Legend,
+  Cell,
+} from "recharts";
+import { EmptyState, SectionCard } from "@/components/common/ui";
 
 type Props = {
   data: {
@@ -10,29 +18,61 @@ type Props = {
 };
 
 export function StatusPieChart({ data }: Props) {
-  if (!data.length) {
+  const filtered = data.filter((item) => Number.isFinite(item.value));
+
+  if (!filtered.length) {
     return (
-      <div className="rounded-lg border p-8 text-center">No status data</div>
+      <EmptyState
+        title="No status data"
+        description="Status distribution will appear after test results are available."
+      />
     );
   }
+
   return (
-    <div className="rounded-lg border bg-white p-4">
-      <h2 className="mb-4 text-lg font-semibold">Status Distribution</h2>
+    <SectionCard title="Status Distribution" className="lg:col-span-2">
+      <div className="p-4">
+        <ResponsiveContainer width="100%" height={280}>
+          <PieChart>
+            <Pie
+              data={filtered}
+              dataKey="value"
+              nameKey="name"
+              outerRadius={96}
+              innerRadius={54}
+              paddingAngle={2}
+            >
+              {filtered.map((item) => (
+                <Cell key={item.name} fill={colorForStatus(item.name)} />
+              ))}
+            </Pie>
 
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            outerRadius={100}
-            label
-          />
-
-          <Tooltip />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+            <Tooltip
+              contentStyle={{
+                borderColor: "#e5e7eb",
+                borderRadius: 8,
+                boxShadow: "none",
+                fontSize: 12,
+              }}
+            />
+            <Legend iconType="circle" />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </SectionCard>
   );
+}
+
+function colorForStatus(name: string) {
+  const normalized = name.toUpperCase();
+
+  if (normalized.includes("FAIL")) {
+    return "#dc2626";
+  }
+
+  if (normalized.includes("PASS")) {
+    return "#2563eb";
+  }
+
+  return "#9ca3af";
 }

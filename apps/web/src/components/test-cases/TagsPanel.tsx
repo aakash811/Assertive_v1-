@@ -1,3 +1,4 @@
+import { EmptyState, SectionCard } from "@/components/common/ui";
 import { Tag } from "@/types/test-case";
 
 type Props = {
@@ -6,23 +7,26 @@ type Props = {
 
 export function TagsPanel({ tags = [] }: Props) {
   if (!tags.length) {
-    return <div className="rounded-lg border p-4">No tags available</div>;
+    return (
+      <EmptyState
+        title="No tags available"
+        description="Tags synced from inventory will appear here."
+      />
+    );
   }
-  return (
-    <div className="rounded-lg border bg-white p-4">
-      <h2 className="mb-4 text-lg font-semibold">Tags</h2>
 
-      <div className="flex flex-wrap gap-2">
+  return (
+    <SectionCard title="Tags">
+      <div className="flex flex-wrap gap-2 p-5">
         {tags.map((tag) => (
           <span
             key={tag.id}
-            className="rounded-full border px-3 py-1 text-sm"
-            style={{ backgroundColor: tag.color }}
+            className="inline-flex h-7 items-center rounded-full border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700"
           >
             {tag.name}
           </span>
         ))}
       </div>
-    </div>
+    </SectionCard>
   );
 }

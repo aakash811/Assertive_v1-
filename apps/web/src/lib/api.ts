@@ -32,7 +32,9 @@ function apiUrl(path: string) {
 }
 
 function authHeaders() {
-  return {};
+  return {
+    Authorization: `Bearer ${process.env.ASSERTIVE_API_KEY ?? ""}`,
+  };
 }
 
 //
@@ -96,7 +98,6 @@ async function paginatedRequest<T>(
   const response = await fetch(apiUrl(path), { ...init, headers });
   const json = (await response.json()) as PaginatedApiResponse<T>;
 
-  console.log("Paginated", path, json);
   if (!response.ok) {
     throw new Error(json.success ? response.statusText : json.error.message);
   }

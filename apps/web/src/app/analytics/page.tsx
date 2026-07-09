@@ -12,6 +12,7 @@ import { PassRateChart } from "@/components/analytics/PassRateChart";
 import { FailureChart } from "@/components/analytics/FailureChart";
 import { FailureItem, FlakyTest, SlowTest } from "@/types/analytics";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { EmptyState, PageHeader } from "@/components/common/ui";
 
 export default async function AnalyticsPage() {
   const [summary, failures, slowest, flaky, statusDistribution] =
@@ -23,9 +24,27 @@ export default async function AnalyticsPage() {
       getStatusDistribution(),
     ]);
 
+  if (summary.totalTests === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Analytics"
+          description="Inspect aggregate pass rate, failure rate, and test health trends."
+        />
+        <EmptyState
+          title="No analytics available"
+          description="Analytics will appear after your first run batch is synced."
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Analytics</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Analytics"
+        description="Inspect aggregate pass rate, failure rate, and test health trends."
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Total Tests" value={summary.totalTests} />
@@ -72,22 +91,22 @@ export default async function AnalyticsPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <Link
-          href="/test-cases"
-          className="rounded-lg border p-4 hover:bg-gray-50"
+          href="/test-cases?status=FAILED"
+          className="rounded-lg border border-gray-200 bg-white p-4 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
         >
           Failed Tests
         </Link>
 
         <Link
-          href="/test-cases"
-          className="rounded-lg border p-4 hover:bg-gray-50"
+          href="/test-cases?flaky=true"
+          className="rounded-lg border border-gray-200 bg-white p-4 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
         >
           Flaky Tests
         </Link>
 
         <Link
-          href="/test-cases"
-          className="rounded-lg border p-4 hover:bg-gray-50"
+          href="/test-cases?syncState=STALE"
+          className="rounded-lg border border-gray-200 bg-white p-4 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
         >
           Stale Tests
         </Link>

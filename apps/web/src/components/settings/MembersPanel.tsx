@@ -1,4 +1,5 @@
 import type { Member } from "@/types/organization";
+import { Button, EmptyState, SectionCard } from "@/components/common/ui";
 
 type Props = {
   members: Member[];
@@ -6,39 +7,46 @@ type Props = {
 
 export function MembersPanel({ members }: Props) {
   return (
-    <div className="rounded-lg border p-6">
-      <h2 className="mb-4 text-xl font-semibold">Members</h2>
-      {!members.length ? (
-        <div className="text-gray-500">No members yet</div>
-      ) : (
-        <table className="w-full">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-            </tr>
-          </thead>
+    <SectionCard
+      title="Members"
+      description="View organization members and roles."
+    >
+      <div className="space-y-4 p-5">
+        {!members.length ? (
+          <EmptyState
+            title="No members yet"
+            description="Members will appear here when the organization has users."
+          />
+        ) : (
+          <div className="overflow-x-auto rounded-md border border-gray-200">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Name</th>
+                  <th className="px-4 py-3 text-left font-medium">Email</th>
+                  <th className="px-4 py-3 text-left font-medium">Role</th>
+                </tr>
+              </thead>
 
-          <tbody>
-            {members.map((member) => (
-              <tr key={member.id}>
-                <td>{member.user.name}</td>
-                <td>{member.user.email}</td>
-                <td>{member.role}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <div className="mt-6">
-        <button
-          disabled
-          className="cursor-not-allowed rounded bg-gray-300 px-4 py-2 text-gray-600"
-        >
-          Invite Member (Coming Soon)
-        </button>
+              <tbody className="divide-y divide-gray-200">
+                {members.map((member) => (
+                  <tr key={member.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {member.user.name}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {member.user.email}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">{member.role}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <Button disabled>Invite Member (Coming Soon)</Button>
       </div>
-    </div>
+    </SectionCard>
   );
 }

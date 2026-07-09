@@ -1,3 +1,4 @@
+import { EmptyState, SectionCard } from "@/components/common/ui";
 import { HistoryItem } from "@/types/test-case";
 
 type Props = {
@@ -6,39 +7,14 @@ type Props = {
 
 function getBadgeClass(action: string) {
   switch (action) {
-    case "STATUS_CHANGED":
-      return "bg-blue-100 text-blue-700";
-
     case "MANUAL_OVERRIDE":
-      return "bg-red-100 text-red-700";
-
-    case "TEST_DISCOVERED":
-      return "bg-green-100 text-green-700";
-
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
-function getIcon(action: string) {
-  switch (action) {
-    case "UPDATED":
-      return "✏️";
-
-    case "MANUAL_OVERRIDE":
-      return "⚠️";
+      return "border-red-200 bg-red-50 text-red-700";
 
     case "STATUS_CHANGED":
-      return "🔄";
-
-    case "STALE":
-      return "📦";
-
-    case "RESTORED":
-      return "♻️";
+      return "border-blue-200 bg-blue-50 text-blue-700";
 
     default:
-      return "•";
+      return "border-gray-200 bg-gray-100 text-gray-700";
   }
 }
 
@@ -71,70 +47,59 @@ function renderValue(value: unknown) {
 
 export function HistoryTimeline({ items }: Props) {
   if (!items.length) {
-    return <div className="rounded-lg border p-4">No data available</div>;
+    return (
+      <EmptyState
+        title="No history available"
+        description="Status changes and manual overrides will appear here."
+      />
+    );
   }
+
   return (
-    <div className="rounded-lg border bg-emerald-500 p-4">
-      <details open>
-        <summary className="mb-4 cursor-pointer text-lg font-semibold">
-          History
-        </summary>
-        <div className="space-y-4">
-          {items.map((item) => (
-            <div key={item.id} className="border-l-2 pl-4">
-              <div>
-                <span
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${getBadgeClass(item.action)}`}
-                >
-                  {getIcon(item.action)} {item.action}
-                </span>
-              </div>
-
-              {item.changes && (
-                <div className="mt-2 text-sm text-gray-600">
-                  {item.changes && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      {"from" in item.changes && "to" in item.changes && (
-                        <>
-                          {renderValue(item.changes.from)}
-
-                          {" → "}
-
-                          {renderValue(item.changes.to)}
-                        </>
-                      )}
-
-                      {"status" in item.changes && (
-                        <>Status → {renderValue(item.changes.status)}</>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {item.comment && (
-                <div className="mt-2 rounded bg-gray-50 p-2 text-sm">
-                  {item.comment}
-                </div>
-              )}
-
-              {item.changedBy && (
-                <div className="flex items-center gap-2">
-                  <div className=" flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
-                    👤
-                  </div>
-
-                  <div>{item.changedBy ?? "System"}</div>
-                </div>
-              )}
-
-              <div className="text-xs text-gray-500">
+    <SectionCard title="History">
+      <div className="space-y-5 p-5">
+        {items.map((item) => (
+          <div key={item.id} className="border-l-2 border-gray-200 pl-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`inline-flex h-6 items-center rounded-full border px-2 text-xs font-medium ${getBadgeClass(item.action)}`}
+              >
+                {item.action}
+              </span>
+              <span className="text-xs text-gray-500">
                 {getRelativeTime(item.createdAt)}
-              </div>
+              </span>
             </div>
-          ))}
-        </div>
-      </details>
-    </div>
+
+            {item.changes ? (
+              <div className="mt-2 text-sm text-gray-700">
+                {"from" in item.changes && "to" in item.changes ? (
+                  <>
+                    {renderValue(item.changes.from)} -&gt;{" "}
+                    {renderValue(item.changes.to)}
+                  </>
+                ) : null}
+
+                {"status" in item.changes ? (
+                  <>Status -&gt; {renderValue(item.changes.status)}</>
+                ) : null}
+              </div>
+            ) : null}
+
+            {item.comment ? (
+              <div className="mt-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                {item.comment}
+              </div>
+            ) : null}
+
+            {item.changedBy ? (
+              <div className="mt-2 text-xs text-gray-500">
+                Changed by {item.changedBy}
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </SectionCard>
   );
 }
