@@ -13,10 +13,12 @@ manualOverrideRoutes.use("*", apiKeyAuth);
 
 manualOverrideRoutes.patch("/test-cases/:id/override", async (c) => {
   const body = manualOverrideValidator.parse(await c.req.json());
+  const projectId = c.get("projectId");
 
   return c.json(
     ok(
       await manualOverrideService.overrideStatus(
+        projectId,
         c.req.param("id"),
         body.status,
         body.comment,

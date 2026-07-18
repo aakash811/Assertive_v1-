@@ -30,7 +30,7 @@ export const tagRepository = {
     });
   },
 
-  assign(testCaseId: string, tagId: string) {
+  assign(projectId: string, testCaseId: string, tagId: string) {
     return prisma.testCaseTag.create({
       data: {
         testCaseId,
@@ -39,7 +39,7 @@ export const tagRepository = {
     });
   },
 
-  remove(testCaseId: string, tagId: string) {
+  remove(projectId: string, testCaseId: string, tagId: string) {
     return prisma.testCaseTag.delete({
       where: {
         testCaseId_tagId: {
@@ -50,7 +50,7 @@ export const tagRepository = {
     });
   },
 
-  delete(id: string) {
+  delete(id: string, projectId: string) {
     return prisma.tag.delete({
       where: {
         id,

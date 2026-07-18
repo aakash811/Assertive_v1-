@@ -6,6 +6,7 @@ import { ERROR_CODES } from "@assertive/shared";
 
 export const manualOverrideService = {
   async overrideStatus(
+    projectId: string,
     testCaseId: string,
     status: TestStatus,
     comment: string,
@@ -17,7 +18,7 @@ export const manualOverrideService = {
         },
       });
 
-      if (!existing) {
+      if (!existing || existing.projectId !== projectId) {
         throw new AppError(
           ERROR_CODES.TEST_CASE_NOT_FOUND,
           "Test case not found",

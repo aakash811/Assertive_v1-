@@ -27,4 +27,11 @@ program.addCommand(viewCommand);
 program.addCommand(uploadCommand);
 program.addCommand(projectsCommand);
 
-program.parse();
+const args = process.argv.slice(2);
+
+if (args.length === 0) {
+  console.log("CLI dev mode: no command provided, use pnpm --filter @assertive/cli dev sync, etc.");
+  setInterval(() => {}, 1000);
+} else {
+  program.parse(process.argv);
+}

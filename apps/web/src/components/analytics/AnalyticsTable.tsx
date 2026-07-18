@@ -24,20 +24,23 @@ export function AnalyticsTable({ title, rows }: Props) {
     <SectionCard title={title}>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+          <thead className="bg-surface text-xs uppercase tracking-wide text-muted">
             <tr>
               <th className="px-5 py-3 text-left font-medium">Test</th>
               <th className="px-5 py-3 text-right font-medium">Value</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+          <tbody className="divide-y divide-border">
             {rows.map((row) => (
-              <tr key={row.name} className="hover:bg-gray-50 dark:hover:bg-gray-900">
-                <td className="max-w-0 truncate px-5 py-3 font-medium text-gray-900 dark:text-gray-100">
+              <tr
+                key={row.name}
+                className="transition-colors hover:bg-surface"
+              >
+                <td className="max-w-0 truncate px-5 py-3 font-medium text-foreground">
                   {row.name}
                 </td>
 
-                <td className="whitespace-nowrap px-5 py-3 text-right text-gray-600 dark:text-gray-400">
+                <td className="whitespace-nowrap px-5 py-3 text-right text-muted">
                   {row.value || "-"}
                 </td>
               </tr>

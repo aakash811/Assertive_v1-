@@ -60,10 +60,16 @@ describe("SyncResponse", () => {
   it("returns sync statistics", () => {
     const response: SyncResponse = {
       synced: 10,
+      created: 5,
+      updated: 3,
+      restored: 2,
       stale: 2,
     };
 
     expect(response.synced).toBe(10);
+    expect(response.created).toBe(5);
+    expect(response.updated).toBe(3);
+    expect(response.restored).toBe(2);
     expect(response.stale).toBe(2);
   });
 });

@@ -149,16 +149,10 @@ export const testCaseRepository = {
   },
 
   findById(id: string, projectId: string, includeArchived = false) {
-    const where: Prisma.TestCaseWhereInput = {
-      id,
-      projectId,
-    };
-
-    if(!includeArchived) {
-      where.lifecycle = "ACTIVE";
-    }
-    return prisma.testCase.findFirst({
-      where,
+    return prisma.testCase.findUnique({
+      where: {
+        id,
+      },
       include: {
         suite: true,
 
@@ -188,6 +182,16 @@ export const testCaseRepository = {
           take: 20,
         },
       },
+    }).then((testCase) => {
+      if (!testCase || testCase.projectId !== projectId) {
+        return null;
+      }
+
+      if (!includeArchived && testCase.lifecycle !== "ACTIVE") {
+        return null;
+      }
+
+      return testCase;
     });
   },
 
@@ -199,15 +203,13 @@ export const testCaseRepository = {
     },
     projectId: string,
   ) {
-    const existing = await prisma.testCase.findFirst({
+    const existing = await prisma.testCase.findUnique({
       where: {
         id,
-        projectId,
-        lifecycle: "ACTIVE",
       },
     });
 
-    if (!existing) {
+    if (!existing || existing.projectId !== projectId) {
       throw new Error("Test case not found");
     }
 
@@ -221,14 +223,13 @@ export const testCaseRepository = {
   },
 
   async archive(id: string, projectId: string) {
-    const existing = await prisma.testCase.findFirst({
+    const existing = await prisma.testCase.findUnique({
       where: {
         id,
-        projectId,
       },
     });
 
-    if (!existing) {
+    if (!existing || existing.projectId !== projectId) {
       throw new Error("Test case not found");
     }
 
@@ -247,14 +248,13 @@ export const testCaseRepository = {
   },
 
   async restore(id: string, projectId: string) {
-    const existing = await prisma.testCase.findFirst({
+    const existing = await prisma.testCase.findUnique({
       where: {
         id,
-        projectId,
       },
     });
 
-    if (!existing) {
+    if (!existing || existing.projectId !== projectId) {
       throw new Error("Test case not found");
     }
 
@@ -373,10 +373,11 @@ export const testCaseRepository = {
     });
   },
 
-  markStale(id: string) {
-    return prisma.testCase.update({
+  markStale(id: string, projectId: string) {
+    return prisma.testCase.updateMany({
       where: {
         id,
+        projectId,
       },
       data: {
         syncState: "STALE",

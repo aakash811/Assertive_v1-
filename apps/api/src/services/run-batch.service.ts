@@ -41,26 +41,26 @@ export const runBatchService = {
       };
     }
 
-    const batch = await runBatchRepository.findUploadState(
-      batchId,
-      projectId,
-    );
-
-    if (!batch) {
-      throw new AppError(
-        ERROR_CODES.RUN_BATCH_NOT_FOUND,
-        "Run batch not found",
-        404,
-      );
-    }
-
-    if (batch.uploadCompleted) {
-      return {
-        uploaded: 0,
-      };
-    }
-
     return prisma.$transaction(async () => {
+      const batch = await runBatchRepository.findUploadState(
+        batchId,
+        projectId,
+      );
+
+      if (!batch) {
+        throw new AppError(
+          ERROR_CODES.RUN_BATCH_NOT_FOUND,
+          "Run batch not found",
+          404,
+        );
+      }
+
+      if (batch.uploadCompleted) {
+        return {
+          uploaded: 0,
+        };
+      }
+
       const uploaded = await executionEngineService.execute(
         batchId,
         projectId,

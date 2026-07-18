@@ -7,14 +7,14 @@ export const tagService = {
     return tagRepository.findMany(projectId);
   },
 
-  assign(testCaseId: string, tagId: string) {
-    return tagRepository.assign(testCaseId, tagId);
+  assign(projectId: string, testCaseId: string, tagId: string) {
+    return tagRepository.assign(projectId, testCaseId, tagId);
   },
 
-  remove(testCaseId: string, tagId: string) {
-    return tagRepository.remove(testCaseId, tagId);
+  remove(projectId: string, testCaseId: string, tagId: string) {
+    return tagRepository.remove(projectId, testCaseId, tagId);
   },
-  delete(id: string) {
-    return tagRepository.delete(id);
+  delete(id: string, projectId: string) {
+    return tagRepository.delete(id, projectId);
   },
 };

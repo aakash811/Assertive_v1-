@@ -3,12 +3,16 @@ import { paginated } from "../lib/api-response";
 import { getPagination } from "../lib/pagination";
 import type { HonoVariables } from "../types/hono";
 import { historyService } from "../services/history.service";
+import { apiKeyAuth } from "../middleware/api-key-auth";
 
 export const historyRoutes = new Hono<{
   Variables: HonoVariables;
 }>();
 
+historyRoutes.use("*", apiKeyAuth);
+
 historyRoutes.get("/test-cases/:id/history", async (c) => {
+  const projectId = c.get("projectId");
   const { page, limit } = getPagination(
     c.req.query("page"),
     c.req.query("limit"),

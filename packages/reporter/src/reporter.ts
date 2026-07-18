@@ -4,6 +4,7 @@ import { BatchResult } from "./types";
 import { resolveConfig, type ReporterConfig } from "./config";
 import { enqueue, loadQueue, saveQueue, withQueueLock } from "./offline-queue";
 import { getCIContext } from "./context";
+import { flush } from "@assertive/helper";
 
 import {
   Reporter,
@@ -123,8 +124,10 @@ export class AssertiveReporter implements Reporter {
       attachment.path?.endsWith("trace.zip"),
     );
 
+    const canonicalId = flush(test.title)?.id;
+
     const runResult: BatchResult = {
-      externalId: test.title,
+      externalId: canonicalId ?? test.title,
       status: result.status.toUpperCase(),
       durationMs: result.duration,
       errorMessage: result.error?.message,
@@ -146,9 +149,15 @@ export class AssertiveReporter implements Reporter {
         runResult.traceUrl = trace.traceUrl;
       } catch (error) {
         console.warn(
-          `[Assertive] Failed to upload trace for ${test.title}: ${error instanceof Error ? error.message : error}`,
+          `[Assertive] Failed to upload trace for ${test.title}: ${
+            error instanceof Error ? error.message : error
+          }`,
         );
       }
+    }
+
+    if (!this.config.uploadTraces) {
+      runResult.traceUrl = null;
     }
 
     if (this.offlineMode) {

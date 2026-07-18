@@ -180,7 +180,7 @@ describe("sync workflow", () => {
 
     expect(result.stale).toBe(1);
 
-    expect(testCaseRepository.markStale).toHaveBeenCalledWith("old-test");
+    expect(testCaseRepository.markStale).toHaveBeenCalledWith("old-test", "project-1");
     expect(historyService.stale).toHaveBeenCalledWith("old-test");
   });
 

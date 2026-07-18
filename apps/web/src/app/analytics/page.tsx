@@ -24,7 +24,8 @@ export default async function AnalyticsPage() {
       getStatusDistribution(),
     ]);
 
-  if (summary.totalTests === 0) {
+  const data = summary.summary;
+  if (data.totalTests === 0) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -47,19 +48,19 @@ export default async function AnalyticsPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Total Tests" value={summary.totalTests} />
+        <MetricCard title="Total Tests" value={data.totalTests} />
 
-        <MetricCard title="Total Runs" value={summary.totalRuns} />
+        <MetricCard title="Total Runs" value={data.totalRuns} />
 
-        <MetricCard title="Pass Rate" value={`${summary.passRate}%`} />
+        <MetricCard title="Pass Rate" value={`${data.passRate}%`} />
 
-        <MetricCard title="Failure Rate" value={`${summary.failureRate}%`} />
+        <MetricCard title="Failure Rate" value={`${data.failureRate ?? 0}%`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <PassRateChart passRate={summary.passRate} />
+        <PassRateChart passRate={data.passRate} />
 
-        <FailureChart failureRate={summary.failureRate} />
+        <FailureChart failureRate={data.failureRate ?? 0} />
       </div>
 
       <StatusPieChart data={statusDistribution} />

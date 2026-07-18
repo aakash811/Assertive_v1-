@@ -37,9 +37,12 @@ testSuiteRoutes.post("/", async (c) => {
 });
 
 testSuiteRoutes.post("/:suiteId/test-cases/:testCaseId", async (c) => {
+  const projectId = c.get("projectId");
+
   return c.json(
     ok(
       await testSuiteService.assignTestCase(
+        projectId,
         c.req.param("suiteId"),
         c.req.param("testCaseId"),
       ),
@@ -48,11 +51,12 @@ testSuiteRoutes.post("/:suiteId/test-cases/:testCaseId", async (c) => {
 });
 
 testSuiteRoutes.patch("/:id", async (c) => {
+  const projectId = c.get("projectId");
   const body = await c.req.json();
 
   return c.json(
     ok(
-      await testSuiteService.update(c.req.param("id"), {
+      await testSuiteService.update(c.req.param("id"), projectId, {
         name: body.name,
         parentId: body.parentId,
       }),
@@ -61,7 +65,9 @@ testSuiteRoutes.patch("/:id", async (c) => {
 });
 
 testSuiteRoutes.delete("/:id", async (c) => {
-  await testSuiteService.delete(c.req.param("id"));
+  const projectId = c.get("projectId");
+
+  await testSuiteService.delete(c.req.param("id"), projectId);
 
   return c.json(
     ok({

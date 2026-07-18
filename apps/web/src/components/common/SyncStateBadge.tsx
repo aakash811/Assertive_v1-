@@ -3,20 +3,21 @@ type props = {
 };
 
 export function SyncStateBadge({ state }: props) {
-  const styles = {
+  const normalized = (state || "").toUpperCase();
+  const styles: Record<string, string> = {
     SYNCED:
-      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     STALE:
-      "border-gray-300 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300",
+      "border-slate-500/20 bg-slate-500/5 text-slate-500 dark:text-slate-400",
   };
 
   return (
     <span
-      className={`inline-flex h-6 items-center rounded-full border px-2 text-xs font-medium ${
-        styles[state as keyof typeof styles] ?? styles.STALE
+      className={`inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-medium transition-colors ${
+        styles[normalized] ?? styles.STALE
       }`}
     >
-      {state}
+      {normalized}
     </span>
   );
 }

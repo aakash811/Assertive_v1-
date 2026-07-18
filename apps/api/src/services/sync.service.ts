@@ -117,6 +117,7 @@ async function recordHistory(
 }
 
 async function markStaleTests(
+  projectId: string,
   existing: Awaited<ReturnType<typeof testCaseRepository.findByProject>>,
   incomingIds: Set<string>,
 ) {
@@ -131,7 +132,7 @@ async function markStaleTests(
       continue;
     }
 
-    await testCaseRepository.markStale(test.id);
+    await testCaseRepository.markStale(test.id, projectId);
 
     await historyService.stale(test.id);
     stale++;
@@ -229,6 +230,7 @@ export const syncService = {
         }
 
         stale = await markStaleTests(
+          projectId,
           existing,
           incomingIds,
         );

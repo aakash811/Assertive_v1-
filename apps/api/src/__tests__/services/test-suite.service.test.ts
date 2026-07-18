@@ -27,12 +27,14 @@ describe("testSuiteService", () => {
 
   it("assigns test case", async () => {
     await testSuiteService.assignTestCase(
+      "project-1",
       "suite-1",
 
       "tc-1",
     );
 
     expect(testSuiteRepository.assignTestCase).toHaveBeenCalledWith(
+      "project-1",
       "suite-1",
       "tc-1",
     );

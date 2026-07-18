@@ -188,7 +188,7 @@ describe("syncService", () => {
     );
 
     expect(result.stale).toBe(1);
-    expect(testCaseRepository.markStale).toHaveBeenCalledWith("tc-1");
+    expect(testCaseRepository.markStale).toHaveBeenCalledWith("tc-1", "project-1");
     expect(historyService.stale).toHaveBeenCalledWith("tc-1");
   });
 });

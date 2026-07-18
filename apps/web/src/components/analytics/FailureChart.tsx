@@ -20,16 +20,17 @@ export function FailureChart({ failureRate }: Props) {
     <SectionCard title="Failure Rate">
       <div className="p-5">
         <div className="mb-4 flex items-baseline justify-between">
-          <div className="text-3xl font-semibold tracking-tight text-gray-950 dark:text-gray-50">
-            {failureRate}%
+          <div className="text-3xl font-semibold tracking-tight text-foreground">
+            {failureRate.toFixed(1)}%
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Latest aggregate
-          </div>
+          <div className="text-sm text-muted">Latest aggregate</div>
         </div>
 
-        <div className="h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-          <div className="h-full bg-red-600" style={{ width: `${width}%` }} />
+        <div className="h-3 overflow-hidden rounded-full bg-surface-raised">
+          <div
+            className="h-full rounded-full bg-red-500 transition-all duration-700 ease-out"
+            style={{ width: `${width}%` }}
+          />
         </div>
       </div>
     </SectionCard>

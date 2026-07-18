@@ -1,7 +1,5 @@
 import { Hono } from "hono";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
 export const testRoutes = new Hono();
 

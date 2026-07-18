@@ -74,12 +74,10 @@ export const runBatchRepository = {
   },
 
   findById(id: string, projectId: string) {
-    return prisma.runBatch.findFirst({
+    return prisma.runBatch.findUnique({
       where: {
         id,
-        projectId,
       },
-
       include: {
         runs: {
           include: {
@@ -99,6 +97,12 @@ export const runBatchRepository = {
           },
         },
       },
+    }).then((batch) => {
+      if (!batch || batch.projectId !== projectId) {
+        return null;
+      }
+
+      return batch;
     });
   },
 
@@ -106,15 +110,21 @@ export const runBatchRepository = {
     id: string,
     projectId: string,
   ) {
-    return prisma.runBatch.findFirst({
+    return prisma.runBatch.findUnique({
       where: {
         id,
-        projectId,
       },
       select: {
         id: true,
         uploadCompleted: true,
+        projectId: true,
       },
+    }).then((batch) => {
+      if (!batch || batch.projectId !== projectId) {
+        return null;
+      }
+
+      return batch;
     });
   },
 

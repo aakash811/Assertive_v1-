@@ -97,7 +97,7 @@ export function TestCasesClient({
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted">
           {pagination.total} test cases
         </div>
         <TestCasesSort
@@ -116,7 +116,7 @@ export function TestCasesClient({
           Previous
         </Button>
 
-        <div className="text-center text-sm text-gray-500">
+        <div className="text-center text-sm text-muted">
           Page {page} of {totalPages} · Showing {start}-{end} of{" "}
           {pagination.total}
         </div>

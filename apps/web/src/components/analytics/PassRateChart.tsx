@@ -20,16 +20,17 @@ export function PassRateChart({ passRate }: Props) {
     <SectionCard title="Pass Rate">
       <div className="p-5">
         <div className="mb-4 flex items-baseline justify-between">
-          <div className="text-3xl font-semibold tracking-tight text-gray-950 dark:text-gray-50">
-            {passRate}%
+          <div className="text-3xl font-semibold tracking-tight text-foreground">
+            {passRate.toFixed(1)}%
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Latest aggregate
-          </div>
+          <div className="text-sm text-muted">Latest aggregate</div>
         </div>
 
-        <div className="h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-          <div className="h-full bg-blue-600" style={{ width: `${width}%` }} />
+        <div className="h-3 overflow-hidden rounded-full bg-surface-raised">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-all duration-700 ease-out"
+            style={{ width: `${width}%` }}
+          />
         </div>
       </div>
     </SectionCard>

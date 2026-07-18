@@ -7,15 +7,15 @@ export const testSuiteService = {
     return testSuiteRepository.findMany(projectId);
   },
 
-  assignTestCase(suiteId: string, testCaseId: string) {
-    return testSuiteRepository.assignTestCase(suiteId, testCaseId);
+  assignTestCase(projectId: string, suiteId: string, testCaseId: string) {
+    return testSuiteRepository.assignTestCase(projectId, suiteId, testCaseId);
   },
 
-  update(id: string, data: { name?: string; parentId?: string | null }) {
-    return testSuiteRepository.update(id, data);
+  update(id: string, projectId: string, data: { name?: string; parentId?: string | null }) {
+    return testSuiteRepository.update(id, projectId, data);
   },
 
-  delete(id: string) {
-    return testSuiteRepository.delete(id);
+  delete(id: string, projectId: string) {
+    return testSuiteRepository.delete(id, projectId);
   },
 };

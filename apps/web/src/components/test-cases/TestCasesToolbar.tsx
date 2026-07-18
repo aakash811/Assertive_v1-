@@ -39,10 +39,10 @@ export function TestCasesToolbar({
   onFlaky,
 }: Props) {
   const controlClass =
-    "h-9 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 hover:bg-gray-50 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:hover:bg-gray-900 dark:focus:ring-blue-950";
+    "h-9 rounded-lg border border-border bg-surface-raised px-3 text-sm text-foreground shadow-sm transition-colors placeholder:text-muted hover:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:placeholder:text-muted";
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+    <div className="rounded-xl border border-border bg-surface-raised p-3 shadow-sm">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1.5fr)_repeat(6,minmax(120px,1fr))_auto]">
       <input
         value={search}
@@ -118,12 +118,12 @@ export function TestCasesToolbar({
         <option value="STALE">Stale</option>
       </select>
 
-      <label className="flex h-9 items-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300">
+      <label className="flex h-9 items-center gap-2 rounded-lg border border-border bg-surface-raised px-3 text-sm text-foreground shadow-sm">
         <input
           type="checkbox"
           checked={flaky}
           onChange={(e) => onFlaky(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+          className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
         />
         Flaky only
       </label>

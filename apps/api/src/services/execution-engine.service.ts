@@ -4,7 +4,10 @@ import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
 import { BatchUploadResult } from "../validators/run-batch.validator";
 import { testCaseRepository } from "../repositories/test-case.repository";
-import { testRunService } from "./test-run.service";
+import { testRunRepository } from "../repositories/test-run.repository";
+import { runBatchRepository } from "../repositories/run-batch.repository";
+import { historyService } from "./history.service";
+import { flakinessService } from "./flakiness.service";
 
 export const executionEngineService = {
   async execute(
@@ -56,18 +59,65 @@ export const executionEngineService = {
       }
     }
 
-    for (const result of results) {
+    const testRuns = results.map((result) => {
       const testCase = testCaseMap.get(result.externalId)!;
 
-      await testRunService.create({
+      return {
         testCaseId: testCase.id,
         runBatchId: batchId,
         status: result.status as TestStatus,
         durationMs: result.durationMs,
         errorMessage: result.errorMessage,
         traceUrl: result.traceUrl,
+      };
+    });
+
+    await testRunRepository.createMany(testRuns);
+
+    const counts = {
+      total: results.length,
+      passed: 0,
+      failed: 0,
+      skipped: 0,
+    };
+
+    for (const result of results) {
+      const testCase = testCaseMap.get(result.externalId)!;
+
+      await testCaseRepository.updateExecutionState(
+        testCase.id,
+        result.status as TestStatus,
+      );
+
+      const existing = await testCaseRepository.findRawById(testCase.id);
+
+      if (existing?.isManualOverride) {
+        await historyService.manualOverrideCleared(testCase.id);
+      }
+
+      await historyService.statusChanged(testCase.id, {
+        status: {
+          from: existing?.lastStatus,
+          to: result.status,
+        },
       });
+
+      await flakinessService.recalculate(testCase.id);
+
+      switch (result.status) {
+        case "PASSED":
+          counts.passed++;
+          break;
+        case "FAILED":
+          counts.failed++;
+          break;
+        case "SKIPPED":
+          counts.skipped++;
+          break;
+      }
     }
+
+    await runBatchRepository.updateCounters(batchId, counts);
 
     return results.length;
   },

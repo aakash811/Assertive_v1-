@@ -84,14 +84,12 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950 lg:block">
-      <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
-        <h1 className="text-base font-semibold text-gray-950 dark:text-gray-50">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-border bg-surface dark:bg-background lg:block">
+      <div className="border-b border-border px-5 py-4">
+        <h1 className="text-base font-semibold text-foreground">
           Assertive
         </h1>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Test management
-        </p>
+        <p className="mt-1 text-xs text-muted">Test management</p>
       </div>
 
       <nav className="flex flex-col gap-1 p-3" aria-label="Primary">
@@ -106,10 +104,10 @@ export function Sidebar() {
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-sm font-medium transition-all",
                 active
-                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300"
-                  : "border-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white",
+                  ? "border-accent bg-accent/10 text-accent dark:text-accent"
+                  : "border-transparent text-muted hover:bg-surface-raised hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4 stroke-current stroke-2" />
@@ -118,8 +116,8 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="absolute bottom-0 w-64 border-t border-gray-200 p-4 dark:border-gray-800">
-        <p className="text-xs text-gray-500 dark:text-gray-400">Assertive V1</p>
+      <div className="absolute bottom-0 w-64 border-t border-border p-4">
+        <p className="text-xs text-muted">Assertive V1</p>
       </div>
     </aside>
   );

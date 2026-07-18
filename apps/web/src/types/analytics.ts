@@ -1,4 +1,4 @@
-export type AnalyticsSummary = {
+export type SummaryMetrics = {
   totalTests: number;
   totalRuns: number;
   flakyTests: number;
@@ -6,7 +6,24 @@ export type AnalyticsSummary = {
   passedRuns: number;
   failedRuns: number;
   passRate: number;
-  failureRate: number;
+  failureRate?: number;
+};
+
+export type MetricsSummaryResponse = {
+  summary: SummaryMetrics;
+  flakyTests: number;
+  testTypeBreakdown: {
+    name: string;
+    value: number;
+  }[];
+  priorityBreakdown: {
+    name: string;
+    value: number;
+  }[];
+};
+
+export type AnalyticsSummaryResponse = {
+  summary: SummaryMetrics;
 };
 
 export type StatusDistibution = {

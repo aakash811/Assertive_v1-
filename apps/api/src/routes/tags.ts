@@ -30,21 +30,27 @@ tagRoutes.post("/", async (c) => {
 });
 
 tagRoutes.post("/:tagId/test-cases/:testCaseId", async (c) => {
+  const projectId = c.get("projectId");
+
   return c.json(
     ok(
-      await tagService.assign(c.req.param("testCaseId"), c.req.param("tagId")),
+      await tagService.assign(projectId, c.req.param("testCaseId"), c.req.param("tagId")),
     ),
   );
 });
 
 tagRoutes.delete("/:tagId/test-cases/:testCaseId", async (c) => {
-  await tagService.remove(c.req.param("testCaseId"), c.req.param("tagId"));
+  const projectId = c.get("projectId");
+
+  await tagService.remove(projectId, c.req.param("testCaseId"), c.req.param("tagId"));
 
   return c.json(ok({ success: true }));
 });
 
 tagRoutes.delete("/:id", async (c) => {
-  await tagService.delete(c.req.param("id"));
+  const projectId = c.get("projectId");
+
+  await tagService.delete(c.req.param("id"), projectId);
 
   return c.json(
     ok({

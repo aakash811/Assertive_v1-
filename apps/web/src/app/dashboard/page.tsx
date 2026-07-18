@@ -42,7 +42,8 @@ export default async function DashboardPage() {
     }),
     getRecentFailures(),
   ]);
-  if (metrics.totalTests === 0) {
+  const summary = metrics.summary;
+  if (summary.totalTests === 0) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -66,18 +67,18 @@ export default async function DashboardPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard title="Total Tests" value={metrics.totalTests} />
+        <MetricCard title="Total Tests" value={summary.totalTests} />
 
-        <MetricCard title="Total Runs" value={metrics.totalRuns} />
+        <MetricCard title="Total Runs" value={summary.totalRuns} />
 
-        <MetricCard title="Stale Runs" value={metrics.staleRuns} />
+        <MetricCard title="Stale Tests" value={summary.staleRuns} />
 
         <MetricCard title="Flaky Tests" value={metrics.flakyTests} />
 
-        <MetricCard title="Pass Rate" value={`${metrics.passRate}%`} />
+        <MetricCard title="Pass Rate" value={`${summary.passRate}%`} />
       </div>
 
-      <HealthCard passRate={metrics.passRate} />
+      <HealthCard passRate={summary.passRate} />
 
       <RecentFailures items={recentFailures} />
 
@@ -89,9 +90,9 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <PassRateChart passRate={metrics.passRate} />
+        <PassRateChart passRate={summary.passRate} />
 
-        <FailureChart failureRate={100 - metrics.passRate} />
+        <FailureChart failureRate={100 - summary.passRate} />
 
         <StatusPieChart
           data={status.map((item) => ({

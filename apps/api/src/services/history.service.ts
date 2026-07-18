@@ -88,9 +88,9 @@ export const historyService = {
     limit: number,
   ) {
     const testCase =
-      await testCaseRepository.findById(
-        projectId,
+      await testCaseRepository.findByExternalId(
         externalId,
+        projectId,
       );
 
     if (!testCase) {

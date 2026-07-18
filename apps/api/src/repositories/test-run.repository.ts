@@ -56,14 +56,19 @@ export const testRunRepository = {
   },
 
   findById(id: string, projectId: string) {
-    return prisma.testRun.findFirst({
+    return prisma.testRun.findUnique({
       where: {
         id,
-
-        testCase: {
-          projectId,
-        },
       },
+      include: {
+        testCase: true,
+      },
+    }).then((run) => {
+      if (!run || run.testCase.projectId !== projectId) {
+        return null;
+      }
+
+      return run;
     });
   },
 

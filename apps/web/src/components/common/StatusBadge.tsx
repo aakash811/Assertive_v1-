@@ -3,24 +3,25 @@ type Props = {
 };
 
 export function StatusBadge({ status }: Props) {
-  const styles = {
+  const normalized = (status || "").toUpperCase();
+  const styles: Record<string, string> = {
     PASSED:
-      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     FAILED:
-      "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300",
+      "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400",
     SKIPPED:
-      "border-gray-200 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300",
+      "border-slate-500/30 bg-slate-500/10 text-slate-600 dark:text-slate-400",
     UNKNOWN:
-      "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400",
+      "border-slate-500/30 bg-slate-500/10 text-slate-600 dark:text-slate-400",
   };
 
   return (
     <span
-      className={`inline-flex h-6 items-center rounded-full border px-2 text-xs font-medium ${
-        styles[status as keyof typeof styles] ?? styles.UNKNOWN
+      className={`inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-medium transition-colors ${
+        styles[normalized] ?? styles.UNKNOWN
       }`}
     >
-      {status}
+      {normalized}
     </span>
   );
 }

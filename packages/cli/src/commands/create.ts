@@ -24,13 +24,6 @@ export const createCommand = new Command("create")
     const config = loadAssertiveConfig(root);
     const testsDir = path.join(root, "tests");
 
-    const created = await apiPost("/api/test-cases", {
-      title,
-      description: "",
-      priority: options.priority,
-      testType: options.type,
-    });
-
     fs.mkdirSync(testsDir, { recursive: true });
 
     const fileName = `${toSlug(title) || "new-test"}.spec.ts`;
@@ -40,6 +33,13 @@ export const createCommand = new Command("create")
       console.error(`${fileName} already exists`);
       return;
     }
+
+    const created = await apiPost("/api/test-cases", {
+      title,
+      description: "",
+      priority: options.priority,
+      testType: options.type,
+    });
 
     const tags = Array.isArray(options.tags) ? options.tags : [];
 
@@ -70,9 +70,7 @@ export const createCommand = new Command("create")
     }
 
     if (tags.length) {
-      content.push(
-        `  assertive.tags(${JSON.stringify(title)}, ${tags.map((tag: string) => JSON.stringify(tag)).join(", ")});`,
-      );
+      content.push(`  assertive.tags(${JSON.stringify(title)}, ${tags.map((tag: string) => JSON.stringify(tag)).join(", ")});`);
     }
 
     content.push("", "  expect(true).toBeTruthy();", "});", "");

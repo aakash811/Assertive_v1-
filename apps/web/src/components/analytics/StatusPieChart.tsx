@@ -49,7 +49,7 @@ export function StatusPieChart({ data }: Props) {
 
             <Tooltip
               contentStyle={{
-                borderColor: "#e5e7eb",
+                borderColor: "var(--border)",
                 borderRadius: 8,
                 boxShadow: "none",
                 fontSize: 12,
@@ -67,12 +67,20 @@ function colorForStatus(name: string) {
   const normalized = name.toUpperCase();
 
   if (normalized.includes("FAIL")) {
-    return "#dc2626";
+    return "#ef4444";
   }
 
   if (normalized.includes("PASS")) {
-    return "#2563eb";
+    return "#10b981";
   }
 
-  return "#9ca3af";
+  if (normalized.includes("SKIP")) {
+    return "#64748b";
+  }
+
+  if (normalized.includes("TIMEOUT") || normalized.includes("UNKNOWN")) {
+    return "#f59e0b";
+  }
+
+  return "#94a3b8";
 }

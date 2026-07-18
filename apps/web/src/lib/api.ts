@@ -1,10 +1,11 @@
 import type {
-  AnalyticsSummary,
+  AnalyticsSummaryResponse,
   FailureItem,
   FlakyTest,
   RecentFailure,
   SlowTest,
   StatusDistibution,
+  MetricsSummaryResponse,
 } from "@/types/analytics";
 import type { ApiKey, createdApiKey } from "@/types/api-key";
 import type { RunBatch } from "@/types/run-batch";
@@ -116,8 +117,8 @@ async function paginatedRequest<T>(
 // Metrics
 //
 
-export function getMetricsSummary(): Promise<AnalyticsSummary> {
-  return request<AnalyticsSummary>("/metrics/summary", {
+export function getMetricsSummary(): Promise<MetricsSummaryResponse> {
+  return request<MetricsSummaryResponse>("/metrics/summary", {
     headers: authHeaders(),
     cache: "no-store",
   });
@@ -273,8 +274,8 @@ export function getRunBatch(id: string): Promise<RunBatch> {
 // Analytics
 //
 
-export function getAnalyticsSummary(): Promise<AnalyticsSummary> {
-  return request<AnalyticsSummary>("/analytics/summary", {
+export function getAnalyticsSummary(): Promise<AnalyticsSummaryResponse> {
+  return request<AnalyticsSummaryResponse>("/analytics/summary", {
     headers: authHeaders(),
     cache: "no-store",
   });

@@ -31,12 +31,14 @@ export const testSuiteRepository = {
   },
 
   assignTestCase(
+    projectId: string,
     suiteId: string,
     testCaseId: string,
   ) {
-    return prisma.testCase.update({
+    return prisma.testCase.updateMany({
       where: {
         id: testCaseId,
+        projectId,
       },
       data: {
         suiteId,
@@ -46,23 +48,26 @@ export const testSuiteRepository = {
 
   update(
     id: string,
+    projectId: string,
     data: {
       name?: string;
       parentId?: string | null;
     },
   ) {
-    return prisma.testSuite.update({
+    return prisma.testSuite.updateMany({
       where: {
         id,
+        projectId,
       },
       data,
     });
   },
 
-  delete(id: string) {
-    return prisma.testSuite.delete({
+  delete(id: string, projectId: string) {
+    return prisma.testSuite.deleteMany({
       where: {
         id,
+        projectId,
       },
     });
   },

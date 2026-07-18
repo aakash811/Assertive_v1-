@@ -19,19 +19,19 @@ export async function Header() {
   ]);
 
   return (
-    <header className="sticky top-0 z-10 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+    <header className="sticky top-0 z-10 border-b border-border bg-surface-raised/80 backdrop-blur-sm">
       <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+          <div className="text-sm font-semibold text-foreground">
             Assertive
           </div>
-          <div className="truncate text-xs text-gray-500 dark:text-gray-400">
+          <div className="truncate text-xs text-muted">
             Test Management Platform
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="hidden text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:inline">
+          <span className="hidden text-xs font-medium uppercase tracking-wide text-muted sm:inline">
             Project
           </span>
           <ProjectSelector projects={projects} selected={selected} />
@@ -40,14 +40,14 @@ export async function Header() {
       </div>
 
       <nav
-        className="flex gap-1 overflow-x-auto border-t border-gray-200 px-3 py-2 dark:border-gray-800 lg:hidden"
+        className="flex gap-1 overflow-x-auto border-t border-border px-3 py-2 lg:hidden"
         aria-label="Primary"
       >
         {mobileLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
+            className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface-raised hover:text-foreground"
           >
             {link.label}
           </Link>

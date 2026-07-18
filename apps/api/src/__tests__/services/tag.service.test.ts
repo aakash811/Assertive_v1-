@@ -28,9 +28,10 @@ describe("tagService", () => {
   });
 
   it("assigns tag", async () => {
-    await tagService.assign("tc-1", "tag-1");
+    await tagService.assign("project-1", "tc-1", "tag-1");
 
     expect(tagRepository.assign).toHaveBeenCalledWith(
+      "project-1",
       "tc-1",
 
       "tag-1",
@@ -38,9 +39,10 @@ describe("tagService", () => {
   });
 
   it("removes tag", async () => {
-    await tagService.remove("tc-1", "tag-1");
+    await tagService.remove("project-1", "tc-1", "tag-1");
 
     expect(tagRepository.remove).toHaveBeenCalledWith(
+      "project-1",
       "tc-1",
 
       "tag-1",

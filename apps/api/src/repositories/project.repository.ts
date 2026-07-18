@@ -13,11 +13,16 @@ export const projectRepository = {
   },
 
   findById(id: string, organizationId: string) {
-    return prisma.project.findFirst({
+    return prisma.project.findUnique({
       where: {
         id,
-        organizationId,
       },
+    }).then((project) => {
+      if (!project || project.organizationId !== organizationId) {
+        return null;
+      }
+
+      return project;
     });
   },
 

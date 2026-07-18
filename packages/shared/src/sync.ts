@@ -16,5 +16,8 @@ export interface SyncPayload {
 
 export interface SyncResponse {
   synced: number;
+  created: number;
+  updated: number;
+  restored: number;
   stale: number;
 }

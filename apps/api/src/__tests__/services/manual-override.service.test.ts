@@ -30,7 +30,7 @@ describe("manualOverrideService", () => {
     );
 
     await expect(
-      manualOverrideService.overrideStatus("tc1", "FAILED", "comment"),
+      manualOverrideService.overrideStatus("project-1", "tc1", "FAILED", "comment"),
     ).rejects.toThrow("Test case not found");
   });
 });
