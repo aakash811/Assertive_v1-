@@ -717,14 +717,18 @@ async function main() {
   await printStatistics();
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+export { main as seedDatabase };
+
+if (process.argv[1] && process.argv[1].includes('seed.ts')) {
+  main()
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
 
 // async function main() {
 //   const organization = await seedOrganization();
