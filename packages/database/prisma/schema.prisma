@@ -29,6 +29,8 @@ model User {
   id    String @id @default(uuid())
   email String @unique
   name  String
+  passwordHash String?
+  refreshToken String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,6 +105,8 @@ model ApiKey {
   organizationId String
 
   organization Organization @relation(fields: [organizationId], references: [id])
+
+  lastUsedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -4,10 +4,15 @@ import type { HonoVariables } from "../types/hono";
 import { organizationService } from "../services/organization.service";
 import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
+import { apiKeyAuth } from "../middleware/api-key-auth";
+import { requireRole } from "../middleware/require-role";
+import { ORGANIZATION_ROLES } from "@assertive/shared";
 
 export const organizationRoutes = new Hono<{
   Variables: HonoVariables;
 }>();
+
+organizationRoutes.use("*", apiKeyAuth);
 
 organizationRoutes.get("/", async (c) => {
   const organizationId = c.get("organizationId");
@@ -25,10 +30,14 @@ organizationRoutes.get("/", async (c) => {
   return c.json(ok(organization));
 });
 
-organizationRoutes.get("/members", async (c) => {
-  const organizationId = c.get("organizationId");
+organizationRoutes.get(
+  "/members",
+  requireRole(ORGANIZATION_ROLES.MEMBER),
+  async (c) => {
+    const organizationId = c.get("organizationId");
 
-  const members = await organizationService.getMembers(organizationId);
+    const members = await organizationService.getMembers(organizationId);
 
-  return c.json(ok(members));
-});
+    return c.json(ok(members));
+  },
+);

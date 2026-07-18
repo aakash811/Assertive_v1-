@@ -58,6 +58,7 @@ export const apiKeyAuth = createMiddleware<{
   c.set("apiKeyId", apiKey.id);
   c.set("organizationId", apiKey.organizationId);
   c.set("apiScopes", apiKey.scopes);
+  c.set("organizationRole", "owner");
 
   await next();
 });

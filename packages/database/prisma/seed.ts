@@ -1,6 +1,14 @@
 import crypto from "node:crypto";
 import { PrismaClient, Prisma, TestStatus } from "@prisma/client";
 
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+
+  return `scrypt:${salt}:${crypto
+    .scryptSync(password, salt, 64)
+    .toString("hex")}`;
+}
+
 const prisma = new PrismaClient();
 
 const API_SCOPES = [
@@ -115,6 +123,7 @@ async function seedUsers(orgId: string) {
     create: {
       name: "Aakash Borse",
       email: "aakash@assertive.dev",
+      passwordHash: hashPassword("password123"),
     },
   });
 
@@ -128,6 +137,7 @@ async function seedUsers(orgId: string) {
     create: {
       name: "CI Bot",
       email: "ci@assertive.dev",
+      passwordHash: hashPassword("password123"),
     },
   });
 

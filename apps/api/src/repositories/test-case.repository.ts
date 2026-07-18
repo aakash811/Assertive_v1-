@@ -28,6 +28,7 @@ export const testCaseRepository = {
       syncState?: "SYNCED" | "STALE";
       lifecycle?: "ACTIVE" | "ARCHIVED";
       testType?: string;
+      sort?: string;
     },
   ) {
     const {
@@ -42,6 +43,7 @@ export const testCaseRepository = {
       syncState,
       lifecycle,
       testType,
+      sort,
     } = filters;
     const skip = (page - 1) * limit;
 
@@ -116,6 +118,9 @@ export const testCaseRepository = {
       };
     }
 
+    const sortField = sort === "title" ? "title" : "updatedAt";
+    const sortOrder = sort?.startsWith("-") ? "desc" : "asc";
+
     const [items, total] = await Promise.all([
       prisma.testCase.findMany({
         where,
@@ -129,7 +134,7 @@ export const testCaseRepository = {
         },
 
         orderBy: {
-          updatedAt: "desc",
+          [sortField]: sortOrder,
         },
 
         skip,

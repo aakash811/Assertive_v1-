@@ -5,8 +5,11 @@ import { AppError } from "../lib/app-error";
 import { ERROR_CODES } from "@assertive/shared";
 
 import { apiKeyAuth } from "../middleware/api-key-auth";
+import { authMiddleware } from "../middleware/auth";
+import { requireRole } from "../middleware/require-role";
 import type { HonoVariables } from "../types/hono";
 import { auditService } from "../services/audit.service";
+import { ORGANIZATION_ROLES } from "@assertive/shared";
 
 export const projectsRoutes = new Hono<{
   Variables: HonoVariables;
@@ -21,14 +24,18 @@ projectsRoutes.get("/", async (c) => {
   return c.json(ok(projects));
 });
 
-projectsRoutes.post("/", async (c) => {
-  const body = await c.req.json();
-  const organizationId = c.get("organizationId");
+projectsRoutes.post(
+  "/",
+  requireRole(ORGANIZATION_ROLES.ADMIN),
+  async (c) => {
+    const body = await c.req.json();
+    const organizationId = c.get("organizationId");
 
-  const project = await projectService.create(organizationId, body);
-  auditService.projectCreated(project.id, organizationId);
-  return c.json(ok(project), 201);
-});
+    const project = await projectService.create(organizationId, body);
+    auditService.projectCreated(project.id, organizationId);
+    return c.json(ok(project), 201);
+  },
+);
 
 projectsRoutes.get("/:id", async (c) => {
   const id = c.req.param("id");
@@ -42,23 +49,31 @@ projectsRoutes.get("/:id", async (c) => {
   return c.json(ok(project));
 });
 
-projectsRoutes.patch("/:id", async (c) => {
-  const id = c.req.param("id");
-  const body = await c.req.json();
-  const organizationId = c.get("organizationId");
-  const project = await projectService.update(id, body.name, organizationId);
-  auditService.projectUpdated(id);
-  return c.json(ok(project));
-});
+projectsRoutes.patch(
+  "/:id",
+  requireRole(ORGANIZATION_ROLES.ADMIN),
+  async (c) => {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const organizationId = c.get("organizationId");
+    const project = await projectService.update(id, body.name, organizationId);
+    auditService.projectUpdated(id);
+    return c.json(ok(project));
+  },
+);
 
-projectsRoutes.delete("/:id", async (c) => {
-  const id = c.req.param("id");
-  const organizationId = c.get("organizationId");
-  await projectService.remove(id, organizationId);
-  auditService.projectDeleted(id);
-  return c.json(
-    ok({
-      success: true,
-    }),
-  );
-});
+projectsRoutes.delete(
+  "/:id",
+  requireRole(ORGANIZATION_ROLES.ADMIN),
+  async (c) => {
+    const id = c.req.param("id");
+    const organizationId = c.get("organizationId");
+    await projectService.remove(id, organizationId);
+    auditService.projectDeleted(id);
+    return c.json(
+      ok({
+        success: true,
+      }),
+    );
+  },
+);

@@ -32,10 +32,20 @@ describe("cleanupService", () => {
 
     const result = await cleanupService.run();
 
-    expect(prisma.testRun.deleteMany).toHaveBeenCalledWith({ where: {} });
+    expect(prisma.testRun.deleteMany).toHaveBeenCalledWith({
+      where: {
+        createdAt: {
+          lt: expect.any(Date),
+        },
+      },
+    });
 
     expect(prisma.testCaseHistory.deleteMany).toHaveBeenCalledWith({
-      where: {},
+      where: {
+        createdAt: {
+          lt: expect.any(Date),
+        },
+      },
     });
 
     expect(result).toEqual({

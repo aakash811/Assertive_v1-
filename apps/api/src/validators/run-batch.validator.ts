@@ -13,7 +13,12 @@ export type BatchUploadResult = {
   status: string;
   durationMs?: number;
   errorMessage?: string;
+  errorStack?: string;
   traceUrl?: string;
+  browser?: string;
+  os?: string;
+  attemptNumber?: number;
+  retryOf?: string;
 };
 
 export const createRunBatchSchema = z.object({
@@ -33,7 +38,12 @@ export const uploadResultsSchema = z.object({
       status: z.enum(["PASSED", "FAILED", "SKIPPED"]),
       durationMs: z.number().optional(),
       errorMessage: z.string().optional(),
+      errorStack: z.string().optional(),
       traceUrl: z.string().optional(),
+      browser: z.string().optional(),
+      os: z.string().optional(),
+      attemptNumber: z.number().int().optional(),
+      retryOf: z.string().optional(),
     }),
   ),
 });

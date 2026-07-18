@@ -1,42 +1,76 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
-import { getRetentionMs, loadRetentionPolicy } from "../cleanup/retention";
-
-const TRACE_DIRECTORY = path.resolve(
-  process.cwd(),
-  "..",
-  "..",
-  "storage",
-  "traces",
-);
+import { createTraceProvider } from "./storage-factory";
 
 export async function cleanupExpiredTraces() {
-  const retention = getRetentionMs(loadRetentionPolicy().traces);
+  const retentionMs = getRetentionMs();
 
-  const files = await fs.readdir(TRACE_DIRECTORY).catch(() => []);
-
-  const now = Date.now();
-
-  let deleted = 0;
-
-  for (const file of files) {
-    const full = path.join(TRACE_DIRECTORY, file);
-
-    const stat = await fs.stat(full);
-
-    if (now - stat.mtimeMs <= retention) {
-      continue;
-    }
-
-    // future support
-    if (file.endsWith(".protected.zip")) {
-      continue;
-    }
-
-    await fs.unlink(full);
-    deleted++;
+  if (retentionMs <= 0) {
+    return 0;
   }
 
-  return deleted;
+  const provider = createTraceProvider();
+
+  if (provider.delete) {
+    const keys = await provider.list();
+
+    const now = Date.now();
+
+    let deleted = 0;
+
+    for (const key of keys) {
+      const traceKey = key.replace(/\.zip$/, "").split("/").pop() ?? key;
+
+      const result = await getTraceCreatedAt(traceKey);
+
+      if (!result || now - result > retentionMs) {
+        await provider.delete(traceKey);
+        deleted++;
+      }
+    }
+
+    return deleted;
+  }
+
+  return 0;
+}
+
+async function getTraceCreatedAt(traceKey: string): Promise<number | null> {
+  const createdAt = getTraceCreatedAtFromStorage(traceKey);
+
+  if (createdAt) {
+    return createdAt;
+  }
+
+  return getTraceCreatedAtFromDatabase(traceKey);
+}
+
+function getTraceCreatedAtFromStorage(traceKey: string): number | null {
+  return null;
+}
+
+async function getTraceCreatedAtFromDatabase(traceKey: string): Promise<number | null> {
+  return null;
+}
+
+function getRetentionMs(): number {
+  const retention = process.env.RETENTION_TRACES ?? "30d";
+
+  const match = retention.match(/^(\d+)([dmy])$/);
+
+  if (!match) {
+    return 30 * 24 * 60 * 60 * 1000;
+  }
+
+  const value = Number(match[1]);
+  const unit = match[2];
+
+  switch (unit) {
+    case "d":
+      return value * 24 * 60 * 60 * 1000;
+    case "m":
+      return value * 30 * 24 * 60 * 60 * 1000;
+    case "y":
+      return value * 365 * 24 * 60 * 60 * 1000;
+    default:
+      return 30 * 24 * 60 * 60 * 1000;
+  }
 }

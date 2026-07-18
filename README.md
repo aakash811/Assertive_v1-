@@ -21,7 +21,8 @@ The current product is built around five surfaces:
 - Database: PostgreSQL 17, Prisma ORM
 - Testing: Vitest, Playwright playground
 - Charts/UI data views: Recharts and React components
-- Trace storage: local zip files under `storage/traces`
+- Trace storage: local zip files under `storage/traces` or S3 via `STORAGE_PROVIDER=s3`
+- Auth: JWT sessions for web dashboard; bearer API keys for CLI/reporter
 
 ## Repository Layout
 
@@ -130,7 +131,12 @@ If the API is unavailable, the reporter stores a local offline queue and retries
 
 ### 4. View Dashboard
 
-`apps/web` uses `src/lib/api.ts` to call local paths like `/api/assertive/test-cases`. The Next route at `apps/web/src/app/api/assertive/[...path]/route.ts` proxies these requests to the API, injects `Authorization: Bearer ${ASSERTIVE_API_KEY}`, and forwards the selected project cookie as `x-project-id`.
+`apps/web` uses `src/lib/api.ts` to call local paths like `/api/assertive/test-cases`. The Next route at `apps/web/src/app/api/assertive/[...path]/route.ts` proxies these requests to the API, injects `Authorization: Bearer <token>`, and forwards the selected project cookie as `x-project-id`.
+
+The dashboard supports two authentication modes:
+
+- **Web login (JWT):** Users sign in at `/login`. The client stores a JWT in an HTTP-only cookie. The proxy reads the cookie and forwards it as `Authorization: Bearer <jwt>`.
+- **API key (machine):** Server-side `ASSERTIVE_API_KEY` is still supported for CLI/reporter and as a fallback when no JWT cookie is present.
 
 Dashboard pages currently cover:
 
@@ -147,17 +153,17 @@ Dashboard pages currently cover:
 
 The Prisma schema is in `packages/database/prisma/schema.prisma`.
 
-- `User`: user identity record used by organization membership.
+- `User`: user identity record with email, name, password hash, and refresh token.
 - `Organization`: tenant container for projects and API keys.
-- `OrganizationMember`: user-to-organization role link. Roles are plain strings today.
+- `OrganizationMember`: user-to-organization role link with `owner`, `admin`, or `member` roles.
 - `Project`: project-level boundary for test cases, suites, tags, and run batches.
-- `ApiKey`: hashed bearer token scoped to an organization.
+- `ApiKey`: hashed bearer token scoped to an organization with scopes and expiry.
 - `TestSuite`: optional hierarchical grouping for test cases.
 - `TestCase`: inventory item with unique ID, metadata, status, flakiness, sync state, override fields, tags, runs, and history.
 - `Tag`: project-scoped label.
 - `TestCaseTag`: many-to-many test/tag join.
 - `RunBatch`: one test execution batch with branch, commit, environment, CI metadata, and result counters.
-- `TestRun`: one result for one test in one batch.
+- `TestRun`: one result for one test in one batch, including browser, OS, attempt number, retry chain, and stack trace.
 - `TestCaseHistory`: audit trail for creation, update, stale, restore, status change, manual override, and override clearing.
 
 ## Modules
@@ -184,7 +190,7 @@ Purpose: local workflow automation.
 - `ui`: starts API and web dev servers, then opens the dashboard.
 - `view <externalId>`: opens the dashboard detail page for a test.
 - `cleanup`: calls the cleanup endpoint.
-- `upload <file>`: JUnit upload scaffold only; not wired yet.
+- `upload <file>`: JUnit or JSON upload wired to API.
 
 ### `packages/reporter`
 
@@ -216,8 +222,9 @@ Purpose: Prisma schema/client ownership.
 Purpose: authenticated product API.
 
 - Global CORS allows `http://localhost:3000` and Playwright trace viewer.
-- Auth uses bearer API keys hashed with SHA-256.
+- Auth supports bearer API keys hashed with SHA-256 and JWT sessions for web users.
 - `x-project-id` selects a project inside the API key organization; otherwise the first organization project is used.
+- RBAC enforced via `requireRole` middleware on mutating routes (admin for projects/API keys, member for organization members).
 - App errors and Zod errors are normalized into the shared error response shape.
 
 ### `apps/web`
@@ -226,6 +233,7 @@ Purpose: dashboard UI.
 
 - Server/client components call typed helper functions in `src/lib/api.ts`.
 - The internal proxy keeps API keys server-side.
+- Login page at `/login` accepts email/password, stores JWT in an HTTP-only cookie, and redirects to `/dashboard`.
 - Current UI supports dashboard, analytics, test cases, run batches, traces, settings, API key management, and manual status override.
 
 ## Local Setup
@@ -251,9 +259,11 @@ cp .env.example .env
 Important variables:
 
 - `DATABASE_URL=postgresql://postgres:postgres@localhost:5433/assertive`
+- `JWT_SECRET=<random-string-for-web-sessions>`
 - `ASSERTIVE_API_KEY=<dashboard/reporter/cli key>`
 - `ASSERTIVE_INTERNAL_API_URL=http://localhost:4321/api`
 - `APP_URL=http://localhost:4321`
+- `STORAGE_PROVIDER=local` (or `s3` with `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`)
 
 4. Run migrations and seed data:
 
@@ -276,10 +286,11 @@ pnpm --filter @assertive/cli dev ui
 
 ## API Conventions
 
-Protected API routes require:
+Protected API routes require one of:
 
 ```txt
-Authorization: Bearer <ask_live_...>
+Authorization: Bearer <ask_live_...>       (API key / machine)
+Authorization: Bearer <jwt-token>          (web session)
 x-project-id: <project-id>        optional
 Content-Type: application/json    for JSON writes
 ```
@@ -321,25 +332,29 @@ Error:
 | --- | --- | --- | --- | --- |
 | `GET` | `/api/health` | none | `{ status, timestamp }` | Public health check. |
 | `GET` | `/test` | none | `{ projects }` | Public diagnostic project count. |
-| `GET` | `/api/me` | auth | `{ projectId, apiKeyId }` | Confirms auth context. |
+| `POST` | `/api/auth/login` | `{ email, password }` | `{ token, user }` | Issues JWT for web session. |
+| `POST` | `/api/auth/register` | `{ email, password, name, organizationName }` | `{ token, user }` | Creates first user/org. |
+| `GET` | `/api/auth/me` | JWT | `{ id, email, name, role, organizationId }` | Current user profile. |
+| `POST` | `/api/auth/logout` | JWT | `{ success: true }` | Client-side token discard. |
+| `GET` | `/api/me` | auth | `{ projectId, apiKeyId }` | Confirms API key context. |
 
 ### API Keys
 
 | Method | Path | Request | Response | Notes |
 | --- | --- | --- | --- | --- |
-| `GET` | `/api/api-keys` | none | `ApiKey[]` | Uses first organization in DB; currently not bearer-protected. |
-| `POST` | `/api/api-keys` | `{ "name": "CI" }` | `{ id, key }` | Creates `ask_live_...`; stores only hash. |
-| `DELETE` | `/api/api-keys/:id` | none | `{ success: true }` | Sets `isActive=false`. |
+| `GET` | `/api/api-keys` | auth, admin | `ApiKey[]` | Organization API keys. |
+| `POST` | `/api/api-keys` | auth, admin | `{ id, key }` | Creates `ask_live_...`; stores only hash. |
+| `DELETE` | `/api/api-keys/:id` | auth, admin | `{ success: true }` | Sets `isActive=false`. |
 
 ### Projects
 
 | Method | Path | Request | Response | Notes |
 | --- | --- | --- | --- | --- |
-| `GET` | `/api/projects` | auth | `Project[]` | Organization projects for API key. |
-| `POST` | `/api/projects` | `{ name, slug, organizationId }` | `Project` | Creates a project. |
+| `GET` | `/api/projects` | auth | `Project[]` | Organization projects. |
+| `POST` | `/api/projects` | auth, admin | `{ name, slug, organizationId }` | Creates a project. |
 | `GET` | `/api/projects/:id` | auth | `Project` | Fetch by ID. |
-| `PATCH` | `/api/projects/:id` | `{ name }` | `Project` | Rename any project by ID. |
-| `DELETE` | `/api/projects/:id` | auth | `{ success: true }` | Deletes project. |
+| `PATCH` | `/api/projects/:id` | auth, admin | `{ name }` | Rename any project by ID. |
+| `DELETE` | `/api/projects/:id` | auth, admin | `{ success: true }` | Deletes project. |
 | `GET` | `/api/project` | auth, optional `x-project-id` | `Project` | Current selected project. |
 | `PATCH` | `/api/project` | `{ name }` | `Project` | Rename current selected project. |
 
@@ -347,8 +362,8 @@ Error:
 
 | Method | Path | Request | Response | Notes |
 | --- | --- | --- | --- | --- |
-| `GET` | `/api/organization` | auth | `Organization` | Current API key organization. |
-| `GET` | `/api/organization/members` | auth | `OrganizationMember[]` with `user` | Ordered by role. |
+| `GET` | `/api/organization` | auth | `Organization` | Current auth organization. |
+| `GET` | `/api/organization/members` | auth, member | `OrganizationMember[]` with `user` | Ordered by role. |
 
 ### Sync And Status
 
@@ -408,7 +423,12 @@ Error:
   "status": "PASSED",
   "durationMs": 1234,
   "errorMessage": "optional",
-  "traceUrl": "http://localhost:4321/api/traces/<traceKey>"
+  "errorStack": "optional",
+  "traceUrl": "http://localhost:4321/api/traces/<traceKey>",
+  "browser": "chromium",
+  "os": "linux",
+  "attemptNumber": 1,
+  "retryOf": "<previous-run-id>"
 }
 ```
 
@@ -431,8 +451,8 @@ Error:
 
 | Method | Path | Request | Response | Notes |
 | --- | --- | --- | --- | --- |
-| `PATCH` | `/api/manual-overrides/test-cases/:id/override` | `{ status, comment }` | `{ success, testCase }` | Mounted direct API route. |
-| `PATCH` | `/api/test-cases/:id/override` | `{ status, comment }` | proxied expectation in web client | Web client currently calls this path, but API mounts override under `/api/manual-overrides`; path alignment should be fixed. |
+| `PATCH` | `/api/manual-overrides/test-cases/:id/override` | auth | `{ success, testCase }` | Direct API route. |
+| `PATCH` | `/api/test-cases/:id/override` | auth | `{ success, testCase }` | Alias for web client. |
 
 Allowed override status values: `PASSED`, `FAILED`, `SKIPPED`, `UNKNOWN`. Comments must be 3-500 characters.
 
@@ -455,52 +475,36 @@ The service creates a manual run batch, creates a manual `TestRun`, updates batc
 | Method | Path | Request | Response | Notes |
 | --- | --- | --- | --- | --- |
 | `GET` | `/api/test-runs/upload-url` | auth | `{ traceKey, uploadUrl, traceUrl }` | Reporter requests before upload. |
-| `PUT` | `/api/traces/:traceKey` | zip bytes | `{ success, traceKey, traceUrl }` | Saves zip locally. |
+| `PUT` | `/api/traces/:traceKey` | zip bytes | `{ success, traceKey, traceUrl }` | Saves to local or S3 based on `STORAGE_PROVIDER`. |
 | `GET` | `/api/traces/:traceKey` | none | zip bytes | Public trace retrieval with CORS `*`. |
+
+Trace storage is abstracted behind `TraceProvider`. Set `STORAGE_PROVIDER=local` (default) for filesystem storage under `storage/traces`, or `STORAGE_PROVIDER=s3` with `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and optional `S3_ENDPOINT`/`S3_REGION`/`S3_PREFIX`.
 
 ### Cleanup
 
 | Method | Path | Request | Response | Notes |
 | --- | --- | --- | --- | --- |
-| `POST` | `/api/cleanup` | none | `{ runs, history, traces }` | Deletes all runs and history; trace cleanup is currently `0`. |
+| `POST` | `/api/cleanup` | none | `{ runs, history, traces }` | Deletes expired runs, history, and traces based on retention env vars. |
+
+Retention is controlled by `RETENTION_RUNS`, `RETENTION_HISTORY`, and `RETENTION_TRACES` (e.g. `90d`, `1y`, `30d`).
 
 ## Current Implementation Gaps
 
-- Authentication/login UI is not implemented; the dashboard relies on `ASSERTIVE_API_KEY` configured server-side.
-- RBAC is not implemented. Organization member roles exist as strings but are not enforced.
 - Team/member invitation workflows are not implemented.
-- Some route paths need alignment:
-  - CLI posts `/api/projects/:id/sync`, while API currently mounts the project sync handler under `/api/sync/projects/:id/sync`.
-  - Web manual override calls `/api/test-cases/:id/override`, while API mounts `/api/manual-overrides/test-cases/:id/override`.
-- Web test case history expects a plain array, while the API returns a paginated response.
-- Web test case filters send `type`, while the API reads `testType`.
-- API key create/list/delete routes use the first organization and are not currently protected by bearer auth.
-- `createTestCaseSchema` accepts `tags`, but `testCaseService.create` does not persist those tags.
-- Reporter sends fields such as `browser`, `os`, `errorStack`, `attemptNumber`, and `retryOf`, but batch upload validation/service currently persists only unique ID, status, duration, error message, and trace URL.
-- Reporter discovers missing tests with metadata, but the API discover validator only accepts `externalId` and `title`; metadata is ignored.
-- JUnit upload command is scaffolded but not wired.
-- Cleanup ignores retention env vars and does not delete traces.
-- PGlite, S3 storage, and retention settings are present in env examples/TODO but not implemented in the active code path.
-- Web project switcher is partially represented by project cookie helpers, but the header dropdown remains on the TODO list.
-- Test case sorting is mostly UI-side; API ordering is fixed to `updatedAt desc`.
+- PGlite local database mode is not implemented; Docker Compose is the recommended local setup.
+- Web dashboard pages for runs and settings are basic; richer UX is planned.
 
 ## Improvement Opportunities
 
 - Add an OpenAPI spec or generated API client so CLI, reporter, web, and API validators cannot drift.
-- Standardize route mounting for sync and manual overrides, then add integration tests for every documented endpoint.
-- Protect API key management and project mutation routes with organization-aware authorization.
-- Add real authentication with sessions, login pages, and role checks.
-- Enforce RBAC for organization admin, tester, and viewer roles.
-- Persist the full reporter payload, including browser, OS, retries, attempt number, retry chain, and stack traces.
-- Make batch upload transactional so counters and test runs cannot partially update.
+- Add integration tests for every documented endpoint.
+- Implement PGlite as an optional local database mode.
+- Add team/member invitation workflows.
 - Add pagination limits and request size limits to protect API endpoints.
-- Use retention settings for cleanup and implement trace deletion.
-- Abstract trace storage behind a provider interface before adding S3.
 - Add repository/service tests for project boundaries and `x-project-id` authorization.
 - Improve sync parser support for non-literal titles or document that only literal test names are supported.
 - Avoid generated IDs based only on current count if deleted test cases can leave reusable numbers.
 - Remove browser-facing `console.log` noise from web API helpers.
-- Add seed/setup documentation for creating the first organization, project, and API key.
 
 ## Useful Commands
 

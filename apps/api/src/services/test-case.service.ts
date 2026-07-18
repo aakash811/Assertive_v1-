@@ -1,4 +1,6 @@
 import { testCaseRepository } from "../repositories/test-case.repository";
+import { tagRepository } from "../repositories/tag.repository";
+import { testCaseTagRepository } from "../repositories/test-case-tag.repository";
 import type { TestStatus } from "@prisma/client";
 import { historyService } from "./history.service";
 
@@ -13,12 +15,30 @@ export const testCaseService = {
       priority?: string;
       testType?: string;
       suiteId?: string;
+      tags?: string[];
     },
   ) {
-    return testCaseRepository.create({
+    const testCase = await testCaseRepository.create({
       ...data,
       projectId,
     });
+
+    if (data.tags && data.tags.length > 0) {
+      const tagCache = new Map<string, string>();
+
+      for (const tagName of data.tags) {
+        const tag = await tagRepository.findOrCreate(projectId, tagName);
+        tagCache.set(tag.name, tag.id);
+      }
+
+      const tagIds = data.tags
+        .map((tagName) => tagCache.get(tagName))
+        .filter((id): id is string => Boolean(id));
+
+      await testCaseTagRepository.syncTags(testCase.id, tagIds);
+    }
+
+    return testCase;
   },
 
   list(
@@ -35,6 +55,7 @@ export const testCaseService = {
       syncState?: "SYNCED" | "STALE";
       lifecycle?: "ACTIVE" | "ARCHIVED";
       testType?: string;
+      sort?: string;
     },
   ) {
     return testCaseRepository.findMany(projectId, filters);

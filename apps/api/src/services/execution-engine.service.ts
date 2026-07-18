@@ -68,7 +68,12 @@ export const executionEngineService = {
         status: result.status as TestStatus,
         durationMs: result.durationMs,
         errorMessage: result.errorMessage,
+        errorStack: result.errorStack,
         traceUrl: result.traceUrl,
+        browser: result.browser,
+        os: result.os,
+        attemptNumber: result.attemptNumber ?? 1,
+        retryOfId: result.retryOf,
       };
     });
 

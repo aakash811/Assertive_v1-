@@ -8,7 +8,10 @@ import { ERROR_CODES } from "@assertive/shared";
 import {
   createTestCaseSchema,
   updateTestCaseSchema,
+  discoverTestCaseSchema,
 } from "../validators/test-case.validator";
+import { manualOverrideValidator } from "../validators/manual-override.validator";
+import { manualOverrideService } from "../services/manual-override.service";
 import { TestStatus } from "@prisma/client";
 import { SyncState } from "@prisma/client";
 import { getPagination } from "../lib/pagination";
@@ -55,7 +58,8 @@ testCaseRoutes.get("/", async (c) => {
   const tag = c.req.query("tag");
   const flaky = c.req.query("flaky");
   const suite = c.req.query("suite");
-  const testType = c.req.query("testType");
+  const testType = c.req.query("testType") ?? c.req.query("type");
+  const sort = c.req.query("sort");
 
   const testCases = await testCaseService.list(projectId, {
     page,
@@ -69,6 +73,7 @@ testCaseRoutes.get("/", async (c) => {
     syncState,
     lifecycle,
     testType,
+    sort: sort || undefined,
   });
 
   return c.json(
@@ -144,4 +149,46 @@ testCaseRoutes.patch("/:id/restore", async (c) => {
   const restored = await testCaseService.restore(id, projectId);
 
   return c.json(ok(restored));
+});
+
+testCaseRoutes.post("/discover", async (c) => {
+  const body = discoverTestCaseSchema.parse(await c.req.json());
+  const projectId = c.get("projectId");
+
+  const existing = await testCaseService.findByExternalId(
+    body.externalId,
+    projectId,
+    true,
+  );
+
+  if (existing) {
+    return c.json(ok(existing));
+  }
+
+  const created = await testCaseService.create(projectId, {
+    externalId: body.externalId,
+    title: body.title,
+    description: body.description,
+    owner: body.owner,
+    priority: body.priority,
+    testType: body.testType,
+    tags: body.tags,
+  });
+
+  return c.json(ok(created), 201);
+});
+
+testCaseRoutes.patch("/:id/override", async (c) => {
+  const id = c.req.param("id");
+  const body = manualOverrideValidator.parse(await c.req.json());
+  const projectId = c.get("projectId");
+
+  const result = await manualOverrideService.overrideStatus(
+    projectId,
+    id,
+    body.status,
+    body.comment,
+  );
+
+  return c.json(ok(result));
 });

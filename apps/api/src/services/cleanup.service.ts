@@ -3,6 +3,7 @@ import type { CleanupPolicy } from "../lib/cleanup/cleanup-policy";
 import { cleanupExpiredTraces } from "../lib/storage/trace-cleanup";
 import { historyRepository } from "../repositories/history.repository";
 import { testRunRepository } from "../repositories/test-run.repository";
+import { getRetentionMs, loadRetentionPolicy } from "../lib/cleanup/retention";
 
 const policies: CleanupPolicy[] = [
   {
@@ -10,7 +11,9 @@ const policies: CleanupPolicy[] = [
     enabled: true,
 
     async execute() {
-      const result = await testRunRepository.deleteAll();
+      const retention = getRetentionMs(loadRetentionPolicy().runs);
+      const cutoff = new Date(Date.now() - retention);
+      const result = await testRunRepository.deleteOlderThan(cutoff);
       return result.count;
     },
   },
@@ -20,7 +23,9 @@ const policies: CleanupPolicy[] = [
     enabled: true,
 
     async execute() {
-      const result = await historyRepository.deleteAll();
+      const retention = getRetentionMs(loadRetentionPolicy().history);
+      const cutoff = new Date(Date.now() - retention);
+      const result = await historyRepository.deleteOlderThan(cutoff);
       return result.count;
     },
   },

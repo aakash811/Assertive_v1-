@@ -60,4 +60,14 @@ export const historyRepository = {
       where: {},
     });
   },
+
+  deleteOlderThan(cutoff: Date) {
+    return prisma.testCaseHistory.deleteMany({
+      where: {
+        createdAt: {
+          lt: cutoff,
+        },
+      },
+    });
+  },
 };

@@ -32,7 +32,27 @@ function apiUrl(path: string) {
   return new URL(`${API_BASE_PATH}${path}`, origin).toString();
 }
 
+function getAuthToken(): string | undefined {
+  if (typeof document === "undefined") {
+    return undefined;
+  }
+
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("assertive_token="));
+
+  return match ? match.split("=")[1] : undefined;
+}
+
 function authHeaders() {
+  const token = getAuthToken();
+
+  if (token) {
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
   return {
     Authorization: `Bearer ${process.env.ASSERTIVE_API_KEY ?? ""}`,
   };
@@ -326,7 +346,7 @@ export function overrideTestCaseStatus(
   status: "PASSED" | "FAILED" | "SKIPPED",
   comment: string,
 ): Promise<void> {
-  return request<void>(`/test-cases/${id}/override`, {
+  return request<void>(`/manual-overrides/test-cases/${id}/override`, {
     method: "PATCH",
     headers: {
       ...authHeaders(),

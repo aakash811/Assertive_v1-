@@ -27,6 +27,7 @@ import { requestLogger } from "./middleware/request-logger";
 import { logger } from "./lib/logger";
 import { healthRoutes } from "./routes/health";
 import { config } from "./lib/config";
+import { authRoutes } from "./routes/auth";
 
 const app = new Hono<{ Variables: HonoVariables }>();
 
@@ -70,6 +71,8 @@ app.onError((error, c) => {
 
 app.route("/api/health", healthRoutes);
 
+app.route("/api", authRoutes);
+
 app.route("/test", testRoutes);
 
 app.route("/api/api-keys", apiKeyRoutes);
@@ -87,6 +90,8 @@ app.route("/api/test-suites", testSuiteRoutes);
 app.route("/api/manual-overrides", manualOverrideRoutes);
 
 app.route("/api/sync", syncRoutes);
+
+app.route("/api/projects/:id/sync", syncRoutes);
 
 app.route("/api", traceRoutes);
 

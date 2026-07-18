@@ -21,3 +21,14 @@ export const lifecycleSchema = z.enum([
   "ARCHIVED",
 ]);
 
+export const discoverTestCaseSchema = z.object({
+  externalId: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  owner: z.string().optional(),
+  priority: z.string().optional(),
+  testType: z.string().optional(),
+  suite: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+

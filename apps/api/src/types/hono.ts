@@ -5,4 +5,5 @@ export type HonoVariables = {
   requestId: string;
   apiScopes: string[];
   organizationRole?: string;
+  userId?: string;
 };

@@ -33,4 +33,26 @@ export class LocalTraceProvider implements TraceProvider {
 
     return `${apiUrl}/api/traces/${traceKey}?expires=${expires}&signature=${signature}`;
   }
+
+  async delete(traceKey: string) {
+    const filePath = this.getFilePath(traceKey);
+
+    try {
+      await fs.unlink(filePath);
+    } catch {
+      // Ignore if file does not exist
+    }
+  }
+
+  async list(prefix?: string): Promise<string[]> {
+    try {
+      const files = await fs.readdir(TRACE_DIRECTORY);
+
+      return files
+        .filter((file) => file.endsWith(".zip"))
+        .map((file) => `${prefix ?? ""}${file}`);
+    } catch {
+      return [];
+    }
+  }
 }

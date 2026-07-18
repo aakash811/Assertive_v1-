@@ -6,13 +6,19 @@ import { AppError } from "../lib/app-error";
 import { API_SCOPES, ERROR_CODES, type ApiScope } from "@assertive/shared";
 import { requireScope } from "../middleware/require-scope";
 import { apiKeyAuth } from "../middleware/api-key-auth";
+import { requireRole } from "../middleware/require-role";
 import { auditService } from "../services/audit.service";
+import { ORGANIZATION_ROLES } from "@assertive/shared";
 
 export const apiKeyRoutes = new Hono();
 
 apiKeyRoutes.use("*", apiKeyAuth);
 
-apiKeyRoutes.post("/", requireScope(API_SCOPES.API_KEYS_WRITE), async (c) => {
+apiKeyRoutes.post(
+  "/",
+  requireScope(API_SCOPES.API_KEYS_WRITE),
+  requireRole(ORGANIZATION_ROLES.ADMIN),
+  async (c) => {
   const body = await c.req.json();
 
   const organizationId = c.get("organizationId");
@@ -41,7 +47,11 @@ apiKeyRoutes.post("/", requireScope(API_SCOPES.API_KEYS_WRITE), async (c) => {
   );
 });
 
-apiKeyRoutes.get("/", requireScope(API_SCOPES.API_KEYS_READ), async (c) => {
+apiKeyRoutes.get(
+  "/",
+  requireScope(API_SCOPES.API_KEYS_READ),
+  requireRole(ORGANIZATION_ROLES.ADMIN),
+  async (c) => {
   const organizationId = c.get("organizationId");
 
   const keys = await apiKeyRepository.findMany(organizationId);
@@ -52,6 +62,7 @@ apiKeyRoutes.get("/", requireScope(API_SCOPES.API_KEYS_READ), async (c) => {
 apiKeyRoutes.delete(
   "/:id",
   requireScope(API_SCOPES.API_KEYS_WRITE),
+  requireRole(ORGANIZATION_ROLES.ADMIN),
   async (c) => {
     await apiKeyRepository.revoke(c.req.param("id"));
     auditService.apiKeyRevoked(c.req.param("id"));

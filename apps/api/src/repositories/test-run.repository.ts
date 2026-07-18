@@ -78,6 +78,16 @@ export const testRunRepository = {
     });
   },
 
+  deleteOlderThan(cutoff: Date) {
+    return prisma.testRun.deleteMany({
+      where: {
+        createdAt: {
+          lt: cutoff,
+        },
+      },
+    });
+  },
+
   findRecentByTestCase(
     testCaseId: string,
     limit = 20,
