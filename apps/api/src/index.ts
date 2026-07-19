@@ -28,8 +28,6 @@ import { bodySizeLimit } from "./middleware/body-size-limit";
 import { logger } from "./lib/logger";
 import { healthRoutes } from "./routes/health";
 import { config, validateConfig } from "./lib/config";
-
-validateConfig();
 import { authRoutes } from "./routes/auth";
 import { invitationRoutes } from "./routes/invitations";
 
@@ -108,10 +106,14 @@ app.route("/api", protectedRoutes);
 
 app.route("/api/invitations", invitationRoutes);
 
-const server = serve({
-  fetch: app.fetch,
-  port: config.port,
-});
+if (config.nodeEnv !== "test") {
+  validateConfig();
+
+  const server = serve({
+    fetch: app.fetch,
+    port: config.port,
+  });
+}
 
 export { app };
 
