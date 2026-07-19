@@ -506,14 +506,10 @@ Retention is controlled by `RETENTION_RUNS`, `RETENTION_HISTORY`, and `RETENTION
 
 ## Improvement Opportunities
 
-- Add an OpenAPI spec or generated API client so CLI, reporter, web, and API validators cannot drift.
-- Add integration tests for every documented endpoint.
+- Add generated API client from OpenAPI spec for CLI, reporter, web, and API validators.
+- Expand integration test coverage beyond the health endpoint.
 - Implement PGlite as an optional local database mode.
-- Add pagination limits and request size limits to protect API endpoints.
-- Add repository/service tests for project boundaries and `x-project-id` authorization.
 - Improve sync parser support for non-literal titles or document that only literal test names are supported.
-- Avoid generated IDs based only on current count if deleted test cases can leave reusable numbers.
-- Remove browser-facing `console.log` noise from web API helpers.
 
 ## Useful Commands
 
