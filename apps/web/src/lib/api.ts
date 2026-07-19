@@ -13,7 +13,7 @@ import type { RunResult } from "@/types/run-result";
 import type { HistoryItem, TestCase, TestRun } from "@/types/test-case";
 import type { PaginatedData } from "@/types/api";
 import { Project } from "@/types/project";
-import type { Organization, Member } from "@/types/organization";
+import type { Organization, Member, Invitation } from "@/types/organization";
 
 const API_BASE_PATH = "/api/assertive";
 
@@ -473,4 +473,52 @@ export function getOrganizationMembers(): Promise<Member[]> {
       cache: "no-store",
     },
   );
+}
+
+export function createInvitation(
+  email: string,
+  role = "member",
+): Promise<Invitation> {
+  return request<Invitation>(
+    "/invitations",
+
+    {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, role }),
+      cache: "no-store",
+    },
+  );
+}
+
+export function getInvitations(): Promise<Invitation[]> {
+  return request<Invitation[]>(
+    "/invitations",
+
+    {
+      headers: authHeaders(),
+      cache: "no-store",
+    },
+  );
+}
+
+export function revokeInvitation(id: string): Promise<void> {
+  return request<void>(`/invitations/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+}
+
+export function acceptInvitation(token: string): Promise<void> {
+  return request<void>("/invitations/accept", {
+    method: "POST",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token }),
+  });
 }

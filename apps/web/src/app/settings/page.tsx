@@ -3,15 +3,17 @@ import { ProjectSettings } from "@/components/settings/ProjectSettings";
 import { OrganizationPanel } from "@/components/settings/OrganizationPanel";
 import { ApiKeysPanel } from "@/components/settings/ApiKeysPanel";
 import { MembersPanel } from "@/components/settings/MembersPanel";
-import { getOrganization, getOrganizationMembers } from "@/lib/api";
+import { InvitationsPanel } from "@/components/settings/InvitationsPanel";
+import { getOrganization, getOrganizationMembers, getInvitations } from "@/lib/api";
 import { PageHeader } from "@/components/common/ui";
 
 export default async function SettingsPage() {
-  const [project, keys, organization, members] = await Promise.all([
+  const [project, keys, organization, members, invitations] = await Promise.all([
     getProject(),
     getApiKeys(),
     getOrganization(),
     getOrganizationMembers(),
+    getInvitations(),
   ]);
 
   return (
@@ -24,6 +26,7 @@ export default async function SettingsPage() {
       <ApiKeysPanel initialKeys={keys} />
       <OrganizationPanel organization={organization} />
       <MembersPanel members={members} />
+      <InvitationsPanel initialInvitations={invitations} />
     </div>
   );
 }

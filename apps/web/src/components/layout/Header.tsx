@@ -1,8 +1,8 @@
-import { ProjectSelector } from "../projects/ProjectSelector";
+import { ProjectSelector } from "@/components/projects/ProjectSelector";
 import { getProjects } from "@/lib/api";
 import { getCurrentProjectId } from "@/lib/project-cookie";
 import Link from "next/link";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const mobileLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -19,7 +19,7 @@ export async function Header() {
   ]);
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-surface-raised/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-20 border-b border-border bg-surface-raised/80 backdrop-blur-md">
       <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-foreground">
@@ -47,7 +47,7 @@ export async function Header() {
           <Link
             key={link.href}
             href={link.href}
-            className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface-raised hover:text-foreground"
+            className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface hover:text-foreground"
           >
             {link.label}
           </Link>

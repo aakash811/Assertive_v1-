@@ -15,3 +15,18 @@ export type Member = {
     name: string;
   };
 };
+
+export type Invitation = {
+  id: string;
+  email: string;
+  role: string;
+  token: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  createdAt: string;
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+};

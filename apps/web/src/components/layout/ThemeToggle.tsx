@@ -18,13 +18,40 @@ function getInitialTheme() {
     : "light";
 }
 
+function SunIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="4" fill="currentColor" />
+      <path
+        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export function ThemeToggle() {
   const [theme, setTheme] = useState("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const initialTheme = getInitialTheme();
     setTheme(initialTheme);
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    setMounted(true);
   }, []);
 
   function toggleTheme() {
@@ -36,23 +63,29 @@ export function ThemeToggle() {
 
   const isDark = theme === "dark";
 
+  if (!mounted) {
+    return (
+      <div className="theme-toggle" aria-hidden="true">
+        <div className="theme-toggle-pill" />
+      </div>
+    );
+  }
+
   return (
     <button
       type="button"
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={isDark}
-      className="inline-flex h-9 items-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-900"
+      className="theme-toggle"
     >
-      <span
-        className={cx(
-          "h-3.5 w-3.5 rounded-full border",
-          isDark
-            ? "border-blue-400 bg-blue-500"
-            : "border-gray-400 bg-gray-200",
+      <div className="theme-toggle-pill">
+        {isDark ? (
+          <MoonIcon className="h-3.5 w-3.5 text-accent" />
+        ) : (
+          <SunIcon className="h-3.5 w-3.5 text-warning" />
         )}
-        aria-hidden
-      />
+      </div>
       <span className="hidden sm:inline">{isDark ? "Dark" : "Light"}</span>
     </button>
   );

@@ -28,7 +28,7 @@ export function ProjectSelector({ projects, selected }: Props) {
       disabled={pending}
       onChange={(e) => changeProject(e.target.value)}
       aria-label="Select project"
-      className="h-9 max-w-52 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900"
+      className="project-select"
     >
       {projects.map((project) => (
         <option key={project.id} value={project.id}>

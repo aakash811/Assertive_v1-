@@ -3,12 +3,13 @@ import { tagRepository } from "../repositories/tag.repository";
 import { testCaseTagRepository } from "../repositories/test-case-tag.repository";
 import type { TestStatus } from "@prisma/client";
 import { historyService } from "./history.service";
+import { idGenerationService } from "./id-generation.service";
 
 export const testCaseService = {
   async create(
     projectId: string,
     data: {
-      externalId: string;
+      externalId?: string;
       title: string;
       description?: string;
       owner?: string;
@@ -18,8 +19,13 @@ export const testCaseService = {
       tags?: string[];
     },
   ) {
+    const externalId = data.externalId
+      ? data.externalId
+      : (await idGenerationService.generateUniqueId(projectId)).externalId;
+
     const testCase = await testCaseRepository.create({
       ...data,
+      externalId,
       projectId,
     });
 

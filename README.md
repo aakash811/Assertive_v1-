@@ -9,7 +9,7 @@ The current product is built around five surfaces:
 - `packages/helper`: small Playwright-side metadata helper used inside test files.
 - `packages/cli`: local developer CLI for init, project linking, static test discovery, sync, status, history, dashboard launch, and scaffolding.
 - `packages/reporter`: Playwright reporter that creates run batches, uploads test results, uploads traces, and queues results when the API is offline.
-- `apps/api`: Hono API that authenticates API keys, validates requests, applies business rules, and persists through Prisma.
+- `apps/api`: Hono API that authenticates API keys and JWTs, validates requests, applies business rules, and persists through Prisma. OpenAPI spec available at `apps/api/openapi.json`.
 - `apps/web`: Next.js dashboard that reads and mutates API data through a server-side proxy.
 
 ## Tech Stack
@@ -156,7 +156,7 @@ The Prisma schema is in `packages/database/prisma/schema.prisma`.
 - `User`: user identity record with email, name, password hash, and refresh token.
 - `Organization`: tenant container for projects and API keys.
 - `OrganizationMember`: user-to-organization role link with `owner`, `admin`, or `member` roles.
-- `Project`: project-level boundary for test cases, suites, tags, and run batches.
+- `Project`: project-level boundary for test cases, suites, tags, and run batches. Includes `idPrefix` and `idCounter` for atomic unique ID generation.
 - `ApiKey`: hashed bearer token scoped to an organization with scopes and expiry.
 - `TestSuite`: optional hierarchical grouping for test cases.
 - `TestCase`: inventory item with unique ID, metadata, status, flakiness, sync state, override fields, tags, runs, and history.
@@ -234,7 +234,8 @@ Purpose: dashboard UI.
 - Server/client components call typed helper functions in `src/lib/api.ts`.
 - The internal proxy keeps API keys server-side.
 - Login page at `/login` accepts email/password, stores JWT in an HTTP-only cookie, and redirects to `/dashboard`.
-- Current UI supports dashboard, analytics, test cases, run batches, traces, settings, API key management, and manual status override.
+- Current UI supports dashboard, analytics, test cases, run batches, traces, settings, API key management, manual status override, and team invitations.
+- Error boundaries and loading states are implemented for all major route segments.
 
 ## Local Setup
 
@@ -458,6 +459,15 @@ Allowed override status values: `PASSED`, `FAILED`, `SKIPPED`, `UNKNOWN`. Commen
 
 The service creates a manual run batch, creates a manual `TestRun`, updates batch counters, updates `TestCase.lastStatus`, marks `isManualOverride=true`, and writes `STATUS_OVERRIDE` history.
 
+### Invitations
+
+| Method | Path | Request | Response | Notes |
+| --- | --- | --- | --- | --- |
+| `POST` | `/api/invitations` | auth, admin | `{ email, role? }` | Creates invitation with 7-day expiry. |
+| `GET` | `/api/invitations` | auth | `Invitation[]` | Lists pending invitations. |
+| `DELETE` | `/api/invitations/:id` | auth, admin | `{ success: true }` | Revokes invitation. |
+| `POST` | `/api/invitations/accept` | JWT | `{ token }` | Accepts invitation and joins org. |
+
 ### Metrics And Analytics
 
 | Method | Path | Request | Response | Notes |
@@ -490,16 +500,15 @@ Retention is controlled by `RETENTION_RUNS`, `RETENTION_HISTORY`, and `RETENTION
 
 ## Current Implementation Gaps
 
-- Team/member invitation workflows are not implemented.
 - PGlite local database mode is not implemented; Docker Compose is the recommended local setup.
 - Web dashboard pages for runs and settings are basic; richer UX is planned.
+- Sync parser supports only literal test titles; non-literal titles are not extracted.
 
 ## Improvement Opportunities
 
 - Add an OpenAPI spec or generated API client so CLI, reporter, web, and API validators cannot drift.
 - Add integration tests for every documented endpoint.
 - Implement PGlite as an optional local database mode.
-- Add team/member invitation workflows.
 - Add pagination limits and request size limits to protect API endpoints.
 - Add repository/service tests for project boundaries and `x-project-id` authorization.
 - Improve sync parser support for non-literal titles or document that only literal test names are supported.

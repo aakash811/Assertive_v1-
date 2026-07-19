@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createTestCaseSchema = z.object({
-  externalId: z.string().min(1),
+  externalId: z.string().min(1).optional(),
   title: z.string().min(1),
   description: z.string().optional(),
   owner: z.string().optional(),

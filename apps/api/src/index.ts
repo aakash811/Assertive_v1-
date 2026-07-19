@@ -24,10 +24,14 @@ import { CleanupScheduler } from "./lib/cleanup/scheduler";
 import { cleanupJob } from "./jobs/cleanup-job";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { requestLogger } from "./middleware/request-logger";
+import { bodySizeLimit } from "./middleware/body-size-limit";
 import { logger } from "./lib/logger";
 import { healthRoutes } from "./routes/health";
-import { config } from "./lib/config";
+import { config, validateConfig } from "./lib/config";
+
+validateConfig();
 import { authRoutes } from "./routes/auth";
+import { invitationRoutes } from "./routes/invitations";
 
 const app = new Hono<{ Variables: HonoVariables }>();
 
@@ -42,6 +46,7 @@ app.use(
 
 app.use("*", requestIdMiddleware);
 app.use("*", requestLogger);
+app.use("*", bodySizeLimit);
 
 app.onError((error, c) => {
   if (error instanceof AppError) {
@@ -101,10 +106,14 @@ app.route("/api", cleanupRoutes);
 
 app.route("/api", protectedRoutes);
 
+app.route("/api/invitations", invitationRoutes);
+
 const server = serve({
   fetch: app.fetch,
   port: config.port,
 });
+
+export { app };
 
 const scheduler = new CleanupScheduler(
   cleanupJob,

@@ -44,8 +44,6 @@ export function MembersPanel({ members }: Props) {
             </table>
           </div>
         )}
-
-        <Button disabled>Invite Member (Coming Soon)</Button>
       </div>
     </SectionCard>
   );

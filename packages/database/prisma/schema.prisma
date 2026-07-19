@@ -49,6 +49,7 @@ model Organization {
   members  OrganizationMember[]
   projects Project[]
   apiKeys ApiKey[]
+  invitations Invitation[]
 }
 
 model OrganizationMember {
@@ -65,6 +66,31 @@ model OrganizationMember {
   @@unique([userId, orgId])
 }
 
+model Invitation {
+  id String @id @default(uuid())
+
+  email String
+
+  role String @default("member")
+
+  token String @unique
+
+  organizationId String
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  invitedById String
+
+  expiresAt DateTime
+
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([token])
+}
+
 model Project {
   id   String @id @default(uuid())
 
@@ -73,6 +99,10 @@ model Project {
   slug String @unique
 
   organizationId String
+
+  idPrefix String @default("TST")
+
+  idCounter Int @default(0)
 
   organization Organization @relation(fields: [organizationId], references: [id])
 
